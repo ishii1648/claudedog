@@ -41,9 +41,3 @@ claudedog start
 
 元は [dotfiles](https://github.com/ishii1648/dotfiles) リポジトリの `configs/claude/scripts/` に分散していた計測スクリプト群。ADR-052 でトップレベルディレクトリに隔離後、結合度が十分に低下したため別リポジトリに完全分離。
 
-## 開発プロセス
-
-- 日常の開発は `TODO.md` に「やりたいこと + 完了条件」を箇条書き
-- 完了したら `CHANGELOG.md` に記録して TODO から削除
-- 設計判断を伴う変更は `docs/adr/` に ADR を作成する（`/create-adr` スキル）
-- ADR の実装は `/adr-ship` スキルで受け入れ条件の検証まで自動化
