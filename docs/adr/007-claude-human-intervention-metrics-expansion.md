@@ -1,4 +1,4 @@
-# ADR-041: claude-stats の人の介入指標を拡張する
+# ADR-007: claude-stats の人の介入指標を拡張する
 
 ## ステータス
 
@@ -6,7 +6,7 @@
 
 ## コンテキスト
 
-ADR-036・ADR-037 で Permission UI 回数とその間の自律ストレッチ長（tool_use 数）を計測できるようになった。しかし、Permission UI はあくまで「Claude が許可を求めた」タイミングだけを捉えており、人の介入全般を表していない。
+ADR-003・ADR-004 で Permission UI 回数とその間の自律ストレッチ長（tool_use 数）を計測できるようになった。しかし、Permission UI はあくまで「Claude が許可を求めた」タイミングだけを捉えており、人の介入全般を表していない。
 
 実際には次のような介入がありうる。
 
@@ -84,10 +84,13 @@ def count_ask_user_question(entries):
 
 ## 受け入れ条件
 
-→ [issues.md](../issues.md)（ADR-041 セクション）
+- [x] mid-session メッセージ数がダッシュボードに表示される
+- [x] Permission UI 発生率がダッシュボードに表示される
+- [x] AskUserQuestion 回数がダッシュボードに表示される
+- [x] セッション数/PR がダッシュボードに表示される
 
 ## 関連 ADR
 
-- [ADR-036](036-claude-permission-ui-count-via-hook.md): Permission UI ログ収集・可視化の基盤（本 ADR の前提）
-- [ADR-037](037-claude-autonomy-rate-per-work-unit.md): 自律ストレッチ長の導入（本 ADR と同一ダッシュボードに統合）
-- [ADR-011](011-claude-session-index.md): session-index.jsonl の構造（transcript パスおよびセッション数集計の参照元）
+- [ADR-003](003-claude-permission-ui-count-via-hook.md): Permission UI ログ収集・可視化の基盤（本 ADR の前提）
+- [ADR-004](004-claude-autonomy-rate-per-work-unit.md): 自律ストレッチ長の導入（本 ADR と同一ダッシュボードに統合）
+- [ADR-001](001-claude-session-index.md): session-index.jsonl の構造（transcript パスおよびセッション数集計の参照元）

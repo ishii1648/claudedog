@@ -1,4 +1,4 @@
-# ADR-054: permission-log を PermissionRequest フックに移行する
+# ADR-014: permission-log を PermissionRequest フックに移行する
 
 ## ステータス
 
@@ -6,12 +6,12 @@
 
 ## 関連 ADR
 
-- 依存: ADR-036（permission UI 計測の基盤）
-- 依存: ADR-043（permission UI 内訳の監視 — pretooluse-track.sh + permission-log.sh の設計）
+- 依存: ADR-003（permission UI 計測の基盤）
+- 依存: ADR-009（permission UI 内訳の監視 — pretooluse-track.sh + permission-log.sh の設計）
 
 ## コンテキスト
 
-ADR-036 で採用した `Notification (permission_prompt)` フックによる permission UI 計測が不安定であることが判明した。
+ADR-003 で採用した `Notification (permission_prompt)` フックによる permission UI 計測が不安定であることが判明した。
 
 ### 発見された問題
 
@@ -38,10 +38,10 @@ ADR-036 で採用した `Notification (permission_prompt)` フックによる pe
 
 | 検証項目 | Notification (旧) | PermissionRequest (新) |
 |---|---|---|
-| `cp ... /tmp/...`（external） | 不安定（記録されたりされなかったり） | 安定して記録 ✅ |
-| `mkdir -p /tmp/...`（external） | 記録されなかった | 安定して記録 ✅ |
-| 複数回実行の安定性 | × | ✅（4/4 回記録） |
-| tool_name 直接取得 | ×（pretooluse-track.sh の一時ファイル経由） | ✅（入力 JSON に `tool_name`・`tool_input` が含まれる） |
+| `cp ... /tmp/...`（external） | 不安定（記録されたりされなかったり） | 安定して記録 |
+| `mkdir -p /tmp/...`（external） | 記録されなかった | 安定して記録 |
+| 複数回実行の安定性 | × | 4/4 回記録 |
+| tool_name 直接取得 | ×（pretooluse-track.sh の一時ファイル経由） | 入力 JSON に `tool_name`・`tool_input` が含まれる |
 
 ### 追加の知見
 
@@ -60,4 +60,5 @@ ADR-036 で採用した `Notification (permission_prompt)` フックによる pe
 
 ## 受け入れ条件
 
--> [issues.md](../issues.md)（ADR-054 セクション）
+- [x] permission-log.sh が PermissionRequest フックで安定動作する
+- [x] pretooluse-track.sh の一時ファイル連携が不要になっている

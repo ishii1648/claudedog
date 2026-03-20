@@ -1,4 +1,4 @@
-# ADR-049: セッション数計測からサブエージェントセッションを除外する
+# ADR-011: セッション数計測からサブエージェントセッションを除外する
 
 ## ステータス
 
@@ -6,7 +6,7 @@
 
 ## コンテキスト
 
-ADR-041 で claude-stats に「セッション数/PR」指標を追加した。この指標は「同一 PR に対して Claude を起動し直した回数」を表す工数感覚の代理指標として設計された。
+ADR-007 で claude-stats に「セッション数/PR」指標を追加した。この指標は「同一 PR に対して Claude を起動し直した回数」を表す工数感覚の代理指標として設計された。
 
 しかし実際の計測では、意図より大きい値が出ることが判明した。例として `example-org/docs#854` のセッション数が 9 と表示されたが、体感ではそれほど多くなかった。
 
@@ -54,10 +54,9 @@ SessionStart フック実行時に transcript を読んで `type: "user"` の有
 
 ## 受け入れ条件
 
-→ [issues.md](../issues.md)（ADR-049 セクション）
+- [x] ゴーストセッションがセッション数カウントから除外される
 
 ## 関連 ADR
 
-- [ADR-011](011-claude-session-index.md): session-index.jsonl の構造とセッション記録の基盤
-- [ADR-041](041-claude-human-intervention-metrics-expansion.md): セッション数/PR 指標の導入（本 ADR の修正対象）
-- [ADR-038](038-adr-spike-validation-pattern.md): Spike 検証パターン（案1 の前提確認に適用）
+- [ADR-001](001-claude-session-index.md): session-index.jsonl の構造とセッション記録の基盤
+- [ADR-007](007-claude-human-intervention-metrics-expansion.md): セッション数/PR 指標の導入（本 ADR の修正対象）

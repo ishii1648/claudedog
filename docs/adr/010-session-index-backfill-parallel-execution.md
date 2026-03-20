@@ -1,4 +1,4 @@
-# ADR-046: session-index-backfill-batch.py の並列実行化
+# ADR-010: session-index-backfill-batch.py の並列実行化
 
 ## ステータス
 
@@ -6,12 +6,12 @@
 
 ## 関連 ADR
 
-- 依存: [ADR-040](040-session-index-pr-url-backfill-cron-batch.md) — バッチスクリプトの基本設計
-- スキーマ変更: [ADR-011](011-claude-session-index.md) — session-index.jsonl のデータ構造定義
+- 依存: [ADR-006](006-session-index-pr-url-backfill-cron-batch.md) — バッチスクリプトの基本設計
+- スキーマ変更: [ADR-001](001-claude-session-index.md) — session-index.jsonl のデータ構造定義
 
 ## コンテキスト
 
-ADR-040 で導入した `session-index-backfill-batch.py` は、`pr_urls` が空の `(repo, branch)` グループごとに `gh pr list` を逐次実行する。
+ADR-006 で導入した `session-index-backfill-batch.py` は、`pr_urls` が空の `(repo, branch)` グループごとに `gh pr list` を逐次実行する。
 
 現時点で session-index.jsonl には 371 エントリ・58 ユニークグループが存在し、1 グループあたり最大 8 秒（タイムアウト設定値）かかるため、最悪ケースで **約 8 分** 要する計算になる。実際にユーザーが 10 秒以上応答なしでキャンセルする事態が発生した。
 
@@ -47,9 +47,9 @@ ADR-040 で導入した `session-index-backfill-batch.py` は、`pr_urls` が空
 
 **`backfill_checked` フラグによるスキップ:**
 
-本 ADR は ADR-011 で定義された session-index.jsonl のスキーマに `backfill_checked` フィールドを追加する。
+本 ADR は ADR-001 で定義された session-index.jsonl のスキーマに `backfill_checked` フィールドを追加する。
 
-ADR-011 の既存スキーマ:
+ADR-001 の既存スキーマ:
 
 ```json
 {
@@ -95,4 +95,5 @@ ADR-011 の既存スキーマ:
 
 ## 受け入れ条件
 
-→ [issues.md](../issues.md)（ADR-046 セクション）
+- [x] バックフィルバッチが並列実行される
+- [x] backfill_checked フラグにより PR のないエントリが再処理されない

@@ -1,4 +1,4 @@
-# ADR-036: Notification hook による permission UI 表示回数の計測
+# ADR-003: Notification hook による permission UI 表示回数の計測
 
 ## ステータス
 
@@ -62,4 +62,5 @@ Deny 数は正確に取れるが、Approve 数は取れないため「permission
 
 ## 受け入れ条件
 
-→ [issues.md](../issues.md)（ADR-036 セクション）
+- [x] permission UI 表示時に permission.log にログが記録される
+- [x] 可視化 Web サーバで PR 別の permission UI 回数が表示される

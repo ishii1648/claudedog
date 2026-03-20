@@ -1,4 +1,4 @@
-# ADR-011: Claude セッションを PR ベースで追跡する
+# ADR-001: Claude セッションを PR ベースで追跡する
 
 ## ステータス
 
@@ -79,4 +79,6 @@ Claude Code の hooks を活用して、セッションメタデータと PR URL
 
 ## 受け入れ条件
 
-→ [issues.md](../issues.md)（ADR-011 セクション）
+- [x] SessionStart hook でセッションメタデータが session-index.jsonl に記録される
+- [x] PostToolUse hook で Bash ツール出力から PR URL が抽出・記録される
+- [x] Stop hook でトランスクリプトから PR URL が抽出・記録される
