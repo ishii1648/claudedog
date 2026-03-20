@@ -43,7 +43,7 @@ claudedog start
 
 ## 開発プロセス
 
-- ADR は作成しない。`TODO.md` に「やりたいこと + 完了条件」を箇条書き
+- 日常の開発は `TODO.md` に「やりたいこと + 完了条件」を箇条書き
 - 完了したら `CHANGELOG.md` に記録して TODO から削除
-- 意思決定の追跡は git log + CHANGELOG で十分
-- 過去の ADR は `docs/adr/` に参照用として保持
+- 設計判断を伴う変更は `docs/adr/` に ADR を作成する（`/create-adr` スキル）
+- ADR の実装は `/adr-ship` スキルで受け入れ条件の検証まで自動化
