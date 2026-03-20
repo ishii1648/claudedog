@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: claudedog
+    orgId: 1
+    folder: claudedog
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /Users/sho-lab/ghq/github.com/ishii1648/claudedog/grafana/dashboards
+      foldersFromFilesStructure: false

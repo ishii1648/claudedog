@@ -1,0 +1,10 @@
+apiVersion: 1
+
+datasources:
+  - name: claudedog
+    type: frser-sqlite-datasource
+    access: proxy
+    isDefault: false
+    jsonData:
+      path: /Users/sho-lab/.claude/claudedog.db
+    editable: true

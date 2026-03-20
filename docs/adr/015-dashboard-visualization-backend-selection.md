@@ -1,7 +1,7 @@
 # ADR-015: ダッシュボード可視化基盤の選定
 
 ## ステータス
-Draft
+採用済み
 
 ## 関連 ADR
 - 関連: ADR-003（permission UI ログ収集・可視化の基盤）
@@ -56,7 +56,7 @@ JSONL → SQLite 変換だけで Grafana から直接クエリ可能。最もシ
 
 ## 受け入れ条件
 
-- [ ] JSONL から SQLite への変換バッチが存在し、全メトリクス（permission rate, session count, tool breakdown）を格納できる
-- [ ] Grafana から SQLite データソース経由で PR 別集計クエリが実行できる
-- [ ] 任意の日付範囲フィルタで PR 別メトリクスが表示される
-- [ ] 既存の `dashboard/server.py` の集計・表示機能が Grafana ダッシュボードで代替されている
+- [x] JSONL から SQLite への変換バッチが存在し、全メトリクス（permission rate, session count, tool breakdown）を格納できる
+- [x] Grafana から SQLite データソース経由で PR 別集計クエリが実行できる
+- [x] 任意の日付範囲フィルタで PR 別メトリクスが表示される
+- [x] 既存の `dashboard/server.py` の集計・表示機能が Grafana ダッシュボードで代替されている
