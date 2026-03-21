@@ -1,0 +1,21 @@
+name: Lint Grafana Dashboard
+
+on:
+  pull_request:
+    paths:
+      - "grafana/dashboards/**"
+      - "grafana/dashboards/.lint"
+
+jobs:
+  lint-dashboard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+          cache: false
+
+      - name: Lint Grafana dashboard
+        run: make lint-dashboard
