@@ -4,6 +4,7 @@ hitl-metrics の変更履歴。新しいものが上。
 
 ## 2026-03-21
 
+- ADR-017: 設計/実装セッション分離の自動ディスパッチ
 - Python バッチ2本（session-index-update.py, session-index-backfill-batch.py）を Go に移植
 - dashboard/server.py を削除し、SQLite + Grafana に可視化を移行（ADR-015）
 - `hitl-metrics sync-db` サブコマンドを新規追加（JSONL/log → SQLite 変換）
