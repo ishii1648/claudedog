@@ -25,6 +25,9 @@ declare -a PANELS=(
   "9:perm-rate-weekly-trend"
   "10:tool-breakdown-table"
   "11:tool-breakdown-bar"
+  "12:task-type-perm-rate"
+  "13:task-type-table"
+  "14:review-comments-by-pr"
 )
 
 for entry in "${PANELS[@]}"; do
