@@ -1,0 +1,4 @@
+{"type":"user","timestamp":"2026-03-11T09:00:00Z","message":{"content":"CI に golangci-lint を追加して"}}
+{"type":"assistant","timestamp":"2026-03-11T09:01:00Z","message":{"content":[{"type":"tool_use","name":"Read"},{"type":"tool_use","name":"Edit"},{"type":"tool_use","name":"Bash"}]}}
+{"type":"user","timestamp":"2026-03-11T09:20:00Z","message":{"content":"timeout を 5 分に設定して"}}
+{"type":"assistant","timestamp":"2026-03-11T09:21:00Z","message":{"content":[{"type":"tool_use","name":"Edit"},{"type":"tool_use","name":"Bash"}]}}
