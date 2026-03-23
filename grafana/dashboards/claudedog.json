@@ -93,7 +93,7 @@
       "datasource": { "type": "frser-sqlite-datasource", "uid": "claudedog" },
       "targets": [
         {
-          "rawQueryText": "SELECT pr_url, perm_rate FROM pr_metrics WHERE perm_rate IS NOT NULL ORDER BY perm_rate ASC",
+          "rawQueryText": "SELECT REPLACE(REPLACE(pr_url, 'https://github.com/', ''), '/pull/', '#') AS pr, perm_rate FROM pr_metrics WHERE perm_rate IS NOT NULL ORDER BY perm_rate ASC",
           "refId": "A"
         }
       ],
@@ -118,7 +118,7 @@
       "datasource": { "type": "frser-sqlite-datasource", "uid": "claudedog" },
       "targets": [
         {
-          "rawQueryText": "SELECT pr_url, perm_count FROM pr_metrics ORDER BY perm_count DESC",
+          "rawQueryText": "SELECT REPLACE(REPLACE(pr_url, 'https://github.com/', ''), '/pull/', '#') AS pr, perm_count FROM pr_metrics ORDER BY perm_count DESC",
           "refId": "A"
         }
       ],
@@ -142,7 +142,7 @@
       "datasource": { "type": "frser-sqlite-datasource", "uid": "claudedog" },
       "targets": [
         {
-          "rawQueryText": "SELECT pr_url, session_count FROM pr_metrics ORDER BY session_count DESC",
+          "rawQueryText": "SELECT REPLACE(REPLACE(pr_url, 'https://github.com/', ''), '/pull/', '#') AS pr, session_count FROM pr_metrics ORDER BY session_count DESC",
           "refId": "A"
         }
       ],
@@ -166,7 +166,7 @@
       "datasource": { "type": "frser-sqlite-datasource", "uid": "claudedog" },
       "targets": [
         {
-          "rawQueryText": "SELECT pr_url, mid_session_msgs FROM pr_metrics ORDER BY mid_session_msgs DESC",
+          "rawQueryText": "SELECT REPLACE(REPLACE(pr_url, 'https://github.com/', ''), '/pull/', '#') AS pr, mid_session_msgs FROM pr_metrics ORDER BY mid_session_msgs DESC",
           "refId": "A"
         }
       ],
@@ -190,7 +190,7 @@
       "datasource": { "type": "frser-sqlite-datasource", "uid": "claudedog" },
       "targets": [
         {
-          "rawQueryText": "SELECT pr_url, ask_user_question FROM pr_metrics ORDER BY ask_user_question DESC",
+          "rawQueryText": "SELECT REPLACE(REPLACE(pr_url, 'https://github.com/', ''), '/pull/', '#') AS pr, ask_user_question FROM pr_metrics ORDER BY ask_user_question DESC",
           "refId": "A"
         }
       ],
@@ -270,7 +270,7 @@
       "datasource": { "type": "frser-sqlite-datasource", "uid": "claudedog" },
       "targets": [
         {
-          "rawQueryText": "SELECT pr_url, review_comments FROM pr_metrics WHERE review_comments > 0 ORDER BY review_comments DESC",
+          "rawQueryText": "SELECT REPLACE(REPLACE(pr_url, 'https://github.com/', ''), '/pull/', '#') AS pr, review_comments FROM pr_metrics WHERE review_comments > 0 ORDER BY review_comments DESC",
           "refId": "A"
         }
       ],
