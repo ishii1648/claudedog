@@ -22,7 +22,7 @@ grafana-screenshot: grafana-up
 	bash e2e/screenshot.sh .outputs/grafana-screenshots
 
 lint-dashboard:
-	go run github.com/grafana/dashboard-linter@latest lint --strict --config grafana/dashboards/.lint grafana/dashboards/claudedog.json
+	go run github.com/grafana/dashboard-linter@latest lint --strict --config grafana/dashboards/.lint grafana/dashboards/hitl-metrics.json
 
 # Worktree management (usage: make worktree-create ADR=017)
 # Path convention: <repo_root>@feat-adr-<NNN> (gw_add と同じ @ 区切り)
