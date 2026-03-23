@@ -14,15 +14,10 @@ HEIGHT=500
 TZ="Asia/Tokyo"
 
 declare -a PANELS=(
-  "1:summary"
-  "2:pr-table"
-  "3:perm-rate-by-pr"
-  "4:perm-count-by-pr"
-  "5:session-count-by-pr"
-  "6:mid-session-msgs-by-pr"
-  "7:ask-user-question-by-pr"
-  "8:perm-rate-daily-trend"
-  "9:perm-rate-weekly-trend"
+  "1:headline-kpi"
+  "9:weekly-trend"
+  "12:task-type-perm-rate"
+  "2:pr-scorecard"
   "10:tool-breakdown-table"
   "11:tool-breakdown-bar"
 )
@@ -31,10 +26,28 @@ for entry in "${PANELS[@]}"; do
   ID="${entry%%:*}"
   NAME="${entry##*:}"
   OUTFILE="${OUTDIR}/panel-${ID}-${NAME}.png"
-  URL="${BASE}/render/d-solo/claudedog/claudedog?panelId=${ID}&from=${FROM}&to=${TO}&width=${WIDTH}&height=${HEIGHT}&tz=${TZ}"
+  URL="${BASE}/render/d-solo/hitl-metrics/hitl-metrics?panelId=${ID}&from=${FROM}&to=${TO}&width=${WIDTH}&height=${HEIGHT}&tz=${TZ}"
   echo "Capturing panel ${ID} (${NAME})..."
   curl -sf -o "$OUTFILE" "$URL"
   echo "  → ${OUTFILE}"
 done
+
+# Capture full dashboard for README
+FULL="${OUTDIR}/dashboard-full.png"
+echo "Capturing full dashboard..."
+curl -sf -o "$FULL" "${BASE}/render/d/hitl-metrics/hitl-metrics?from=${FROM}&to=${TO}&width=1200&height=1600&tz=${TZ}&kiosk"
+echo "  → ${FULL}"
+
+# Also export key panels for README docs
+DOCDIR="docs/images"
+mkdir -p "$DOCDIR"
+for pair in "1:headline-kpi:dashboard-headline" "9:weekly-trend:dashboard-weekly-trend" "2:pr-scorecard:dashboard-pr-scorecard"; do
+  ID="${pair%%:*}"
+  rest="${pair#*:}"
+  PANEL_NAME="${rest%%:*}"
+  DOC_NAME="${rest#*:}"
+  cp "${OUTDIR}/panel-${ID}-${PANEL_NAME}.png" "${DOCDIR}/${DOC_NAME}.png"
+done
+cp "$FULL" "${DOCDIR}/dashboard-full.png"
 
 echo "Done: ${#PANELS[@]} panels captured in ${OUTDIR}"

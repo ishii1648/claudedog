@@ -1,4 +1,4 @@
 .outputs/
-e2e/testdata/claudedog.db
-e2e/testdata/claudedog.db-shm
-e2e/testdata/claudedog.db-wal
+e2e/testdata/hitl-metrics.db
+e2e/testdata/hitl-metrics.db-shm
+e2e/testdata/hitl-metrics.db-wal

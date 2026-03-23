@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/ishii1648/claudedog/internal/backfill"
-	"github.com/ishii1648/claudedog/internal/sessionindex"
-	"github.com/ishii1648/claudedog/internal/syncdb"
+	"github.com/ishii1648/hitl-metrics/internal/backfill"
+	"github.com/ishii1648/hitl-metrics/internal/sessionindex"
+	"github.com/ishii1648/hitl-metrics/internal/syncdb"
 )
 
 func main() {
@@ -30,7 +30,7 @@ func main() {
 }
 
 func printUsage() {
-	fmt.Fprintln(os.Stderr, `Usage: claudedog <command> [args...]
+	fmt.Fprintln(os.Stderr, `Usage: hitl-metrics <command> [args...]
 
 Commands:
   update <session_id> <url>...           PR URL を追加

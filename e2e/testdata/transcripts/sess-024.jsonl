@@ -1,0 +1,4 @@
+{"type":"user","timestamp":"2026-03-08T14:00:00Z","message":{"content":"hook 最適化の仕上げ。レビューコメントを反映して"}}
+{"type":"assistant","timestamp":"2026-03-08T14:01:00Z","message":{"content":[{"type":"tool_use","name":"Read"},{"type":"tool_use","name":"Edit"},{"type":"tool_use","name":"Bash"}]}}
+{"type":"user","timestamp":"2026-03-08T14:20:00Z","message":{"content":"エラーハンドリングも追加して"}}
+{"type":"assistant","timestamp":"2026-03-08T14:21:00Z","message":{"content":[{"type":"tool_use","name":"Read"},{"type":"tool_use","name":"Edit"},{"type":"tool_use","name":"Bash"}]}}

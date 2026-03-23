@@ -9,17 +9,17 @@ import (
 
 	_ "modernc.org/sqlite"
 
-	"github.com/ishii1648/claudedog/internal/permlog"
-	"github.com/ishii1648/claudedog/internal/sessionindex"
-	"github.com/ishii1648/claudedog/internal/transcript"
+	"github.com/ishii1648/hitl-metrics/internal/permlog"
+	"github.com/ishii1648/hitl-metrics/internal/sessionindex"
+	"github.com/ishii1648/hitl-metrics/internal/transcript"
 )
 
 const dummyPRURL = "https://github.com/org/repo/pull/123"
 
-// DBPath returns the default path to claudedog.db.
+// DBPath returns the default path to hitl-metrics.db.
 func DBPath() string {
 	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".claude", "claudedog.db")
+	return filepath.Join(home, ".claude", "hitl-metrics.db")
 }
 
 // Run performs a full rebuild of the SQLite database from JSONL/log sources.
@@ -70,8 +70,8 @@ func RunWithPaths(indexPath, permLogPath, dbPath string) error {
 	defer tx.Rollback()
 
 	sessionStmt, err := tx.Prepare(`INSERT OR REPLACE INTO sessions
-		(session_id, timestamp, cwd, repo, branch, pr_url, transcript, parent_session_id, is_subagent, backfill_checked)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+		(session_id, timestamp, cwd, repo, branch, pr_url, transcript, parent_session_id, is_subagent, backfill_checked, is_merged, task_type, review_comments)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
 	if err != nil {
 		return err
 	}
@@ -104,11 +104,16 @@ func RunWithPaths(indexPath, permLogPath, dbPath string) error {
 		if s.BackfillChecked {
 			backfillChecked = 1
 		}
+		isMerged := 0
+		if s.IsMerged {
+			isMerged = 1
+		}
+		taskType := ExtractTaskType(s.Branch)
 
 		if _, err := sessionStmt.Exec(
 			s.SessionID, s.Timestamp, s.CWD, s.Repo, s.Branch,
 			prURL, s.Transcript, s.ParentSessionID,
-			isSubagent, backfillChecked,
+			isSubagent, backfillChecked, isMerged, taskType, s.ReviewComments,
 		); err != nil {
 			return fmt.Errorf("insert session %s: %w", s.SessionID, err)
 		}
@@ -166,6 +171,19 @@ func RunWithPaths(indexPath, permLogPath, dbPath string) error {
 	fmt.Printf("sync-db: pr_metrics VIEW: %d PR\n", prMetricsCount)
 
 	return nil
+}
+
+// ExtractTaskType extracts the task type from a branch name prefix.
+// e.g. "feat/add-metrics" → "feat", "fix/bug-42" → "fix", "main" → ""
+func ExtractTaskType(branch string) string {
+	parts := strings.SplitN(branch, "/", 2)
+	if len(parts) == 2 {
+		switch parts[0] {
+		case "feat", "fix", "docs", "chore":
+			return parts[0]
+		}
+	}
+	return ""
 }
 
 // ShortenPRURL extracts "owner/repo#number" from a full GitHub PR URL.

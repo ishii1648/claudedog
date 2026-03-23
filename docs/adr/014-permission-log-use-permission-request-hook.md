@@ -48,15 +48,15 @@ ADR-003 で採用した `Notification (permission_prompt)` フックによる pe
 1. **pretooluse-track.sh の一時ファイルが不要になる**: `PermissionRequest` の入力 JSON には `tool_name` と `tool_input` が直接含まれるため、`pretooluse-track.sh` → 一時ファイル → `permission-log.sh` の間接的な連携が不要。`permission-log.sh` 単体で tool_name の判定・記録が完結する
 2. **pretooluse-track.sh の Bash パス判定バグ**: `awk '{print $2}'`（第2ワード）でパスを取得していたため、`cp src dest` では source を、`mkdir -p path` ではフラグ `-p` をパスとして誤判定していた。`awk '{print $NF}'`（最終ワード）に修正済み
 3. **`Bash(cp *)` 等の allow リストはプロジェクト内スコープ**: グローバル settings.json の `Bash(cp *)` はプロジェクト内のみ許可。プロジェクト外パスでは permission UI が表示される
-4. **`permission-log.sh` スクリプトのデプロイ漏れ**: 当初 `~/.claude/scripts/` にスクリプトが存在せず、フックがサイレントに失敗していた。`~/.claude/claudedog/hooks/` に配置して解消
+4. **`permission-log.sh` スクリプトのデプロイ漏れ**: 当初 `~/.claude/scripts/` にスクリプトが存在せず、フックがサイレントに失敗していた。`~/.claude/hitl-metrics/hooks/` に配置して解消
 
 ### 変更が必要なファイル
 
 | ファイル | リポジトリ | 変更内容 |
 |---|---|---|
 | `configs/claude/settings.json` | dotfiles | Notification から permission-log.sh を削除し、PermissionRequest フックに登録 |
-| `claudedog/hooks/permission-log.sh` | dotfiles | PermissionRequest の入力 JSON から tool_name・tool_input を直接読むよう変更（一時ファイル依存を廃止） |
-| `claudedog/hooks/pretooluse-track.sh` | dotfiles | Bash パス判定を `awk '{print $2}'` → `awk '{print $NF}'` に修正（permission-log.sh では不要になったが、他の用途で残す） |
+| `hitl-metrics/hooks/permission-log.sh` | dotfiles | PermissionRequest の入力 JSON から tool_name・tool_input を直接読むよう変更（一時ファイル依存を廃止） |
+| `hitl-metrics/hooks/pretooluse-track.sh` | dotfiles | Bash パス判定を `awk '{print $2}'` → `awk '{print $NF}'` に修正（permission-log.sh では不要になったが、他の用途で残す） |
 
 ## 受け入れ条件
 

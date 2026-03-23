@@ -1,12 +1,12 @@
 apiVersion: 1
 
 providers:
-  - name: claudedog
+  - name: hitl-metrics
     orgId: 1
-    folder: claudedog
+    folder: hitl-metrics
     type: file
     disableDeletion: false
     editable: true
     options:
-      path: /Users/sho-lab/ghq/github.com/ishii1648/claudedog/grafana/dashboards
+      path: /Users/sho-lab/ghq/github.com/ishii1648/hitl-metrics/grafana/dashboards
       foldersFromFilesStructure: false

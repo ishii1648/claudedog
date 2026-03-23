@@ -1,11 +1,11 @@
 apiVersion: 1
 
 datasources:
-  - name: claudedog
-    uid: claudedog
+  - name: hitl-metrics
+    uid: hitl-metrics
     type: frser-sqlite-datasource
     access: proxy
     isDefault: false
     jsonData:
-      path: /Users/sho-lab/.claude/claudedog.db
+      path: /var/lib/grafana/hitl-metrics.db
     editable: true
