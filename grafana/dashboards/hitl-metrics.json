@@ -19,7 +19,7 @@
       "title": "",
       "type": "stat",
       "gridPos": { "h": 4, "w": 24, "x": 0, "y": 1 },
-      "datasource": { "type": "frser-sqlite-datasource", "uid": "claudedog" },
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "hitl-metrics" },
       "targets": [
         {
           "rawQueryText": "SELECT COUNT(*) AS 'merged PR 数' FROM pr_metrics",
@@ -92,7 +92,7 @@
       "title": "perm rate 週別トレンド",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 16, "x": 0, "y": 6 },
-      "datasource": { "type": "frser-sqlite-datasource", "uid": "claudedog" },
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "hitl-metrics" },
       "targets": [
         {
           "rawQueryText": "SELECT strftime('%s', date(pe.timestamp, 'weekday 0', '-6 days')) AS time, COUNT(pe.id) AS perm_count, COALESCE(SUM(ts.tool_use_total), 0) AS tool_use_total, CASE WHEN COALESCE(SUM(ts.tool_use_total), 0) > 0 THEN ROUND(COUNT(pe.id) * 100.0 / SUM(ts.tool_use_total), 1) ELSE NULL END AS perm_rate FROM permission_events pe LEFT JOIN sessions s ON pe.session_id = s.session_id LEFT JOIN transcript_stats ts ON pe.session_id = ts.session_id WHERE pe.timestamp BETWEEN '${__from:date:iso}' AND '${__to:date:iso}' AND s.repo NOT IN ('ishii1648/dotfiles') GROUP BY date(pe.timestamp, 'weekday 0', '-6 days') ORDER BY time",
@@ -131,7 +131,7 @@
       "title": "タスク種別 perm rate",
       "type": "barchart",
       "gridPos": { "h": 8, "w": 8, "x": 16, "y": 6 },
-      "datasource": { "type": "frser-sqlite-datasource", "uid": "claudedog" },
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "hitl-metrics" },
       "targets": [
         {
           "rawQueryText": "SELECT CASE WHEN task_type = '' THEN 'other' ELSE task_type END AS task_type, ROUND(SUM(perm_count) * 100.0 / NULLIF(SUM(tool_use_total), 0), 1) AS perm_rate, COUNT(*) AS pr_count FROM pr_metrics GROUP BY task_type ORDER BY perm_rate DESC",
@@ -169,7 +169,7 @@
       "title": "PR 別スコアカード（merged のみ）",
       "type": "table",
       "gridPos": { "h": 12, "w": 24, "x": 0, "y": 15 },
-      "datasource": { "type": "frser-sqlite-datasource", "uid": "claudedog" },
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "hitl-metrics" },
       "targets": [
         {
           "rawQueryText": "SELECT pm.pr_url, pm.task_type, pm.perm_rate, pm.perm_count, pm.session_count, pm.mid_session_msgs, pm.ask_user_question, pm.review_comments, pm.tool_use_total FROM pr_metrics pm ORDER BY pm.perm_rate DESC",
@@ -234,7 +234,7 @@
       "title": "ツール別 permission 内訳",
       "type": "table",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 28 },
-      "datasource": { "type": "frser-sqlite-datasource", "uid": "claudedog" },
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "hitl-metrics" },
       "targets": [
         {
           "rawQueryText": "SELECT pe.tool, COUNT(*) AS count, ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM permission_events WHERE timestamp BETWEEN '${__from:date:iso}' AND '${__to:date:iso}'), 1) AS percentage FROM permission_events pe WHERE pe.timestamp BETWEEN '${__from:date:iso}' AND '${__to:date:iso}' AND pe.tool != 'unknown' GROUP BY pe.tool ORDER BY count DESC",
@@ -260,7 +260,7 @@
       "title": "ツール別 permission 分布",
       "type": "barchart",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 28 },
-      "datasource": { "type": "frser-sqlite-datasource", "uid": "claudedog" },
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "hitl-metrics" },
       "targets": [
         {
           "rawQueryText": "SELECT pe.tool, COUNT(*) AS count FROM permission_events pe WHERE pe.timestamp BETWEEN '${__from:date:iso}' AND '${__to:date:iso}' AND pe.tool != 'unknown' GROUP BY pe.tool ORDER BY count DESC",
@@ -281,12 +281,12 @@
     }
   ],
   "schemaVersion": 39,
-  "tags": ["claudedog"],
+  "tags": ["hitl-metrics"],
   "templating": { "list": [] },
   "time": { "from": "now-30d", "to": "now" },
   "timepicker": {},
   "timezone": "Asia/Tokyo",
   "title": "Claude 自律度ダッシュボード",
-  "uid": "claudedog",
+  "uid": "hitl-metrics",
   "version": 1
 }

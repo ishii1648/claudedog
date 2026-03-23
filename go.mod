@@ -1,4 +1,4 @@
-module github.com/ishii1648/claudedog
+module github.com/ishii1648/hitl-metrics
 
 go 1.22.2
 

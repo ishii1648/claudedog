@@ -35,7 +35,7 @@ Playwright でヘッドレス Chromium を起動し、Grafana の画面をスク
 
 ### 設計上の補足
 
-**datasource uid の固定化**: ダッシュボード JSON が `${DS_CLAUDEDOG}` テンプレート変数を使っていたが、Grafana の provisioning はこの変数を解決しない。全11パネルの datasource uid を固定値 `"claudedog"` に置換し、`__inputs` セクションを削除した。ホスト環境の datasource yaml にも `uid: claudedog` を明示的に追加して一致させた。
+**datasource uid の固定化**: ダッシュボード JSON が `${DS_CLAUDEDOG}` テンプレート変数を使っていたが、Grafana の provisioning はこの変数を解決しない。全11パネルの datasource uid を固定値 `"hitl-metrics"` に置換し、`__inputs` セクションを削除した。ホスト環境の datasource yaml にも `uid: hitl-metrics` を明示的に追加して一致させた。
 
 **テストフィクスチャ**: 8セッション・3PR・15パーミッションイベント・7 transcript で全11パネルにデータが表示される最小構成を設計。subagent セッション、dotfiles リポジトリ、ghost セッション（transcript なし）を含め、pr_metrics VIEW のフィルタ条件も検証できるようにした。
 
@@ -43,10 +43,10 @@ Playwright でヘッドレス Chromium を起動し、Grafana の画面をスク
 
 | ファイル | 変更内容 |
 |---|---|
-| `grafana/dashboards/claudedog.json` | `${DS_CLAUDEDOG}` → `"claudedog"` 置換、`__inputs` 削除 |
-| `grafana/provisioning/datasources/claudedog.yaml` | `uid: claudedog` 追加 |
-| `grafana/provisioning/datasources/claudedog-docker.yaml` | Docker 用 datasource（新規） |
-| `grafana/provisioning/dashboards/claudedog-docker.yaml` | Docker 用 dashboard provisioning（新規） |
+| `grafana/dashboards/hitl-metrics.json` | `${DS_CLAUDEDOG}` → `"hitl-metrics"` 置換、`__inputs` 削除 |
+| `grafana/provisioning/datasources/hitl-metrics.yaml` | `uid: hitl-metrics` 追加 |
+| `grafana/provisioning/datasources/hitl-metrics-docker.yaml` | Docker 用 datasource（新規） |
+| `grafana/provisioning/dashboards/hitl-metrics-docker.yaml` | Docker 用 dashboard provisioning（新規） |
 | `docker-compose.yaml` | Grafana + Image Renderer 構成（新規） |
 | `Makefile` | `grafana-fixtures`, `grafana-up`, `grafana-down`, `grafana-screenshot`（新規） |
 | `e2e/testdata/` | テストフィクスチャ一式（新規） |

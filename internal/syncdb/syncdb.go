@@ -9,17 +9,17 @@ import (
 
 	_ "modernc.org/sqlite"
 
-	"github.com/ishii1648/claudedog/internal/permlog"
-	"github.com/ishii1648/claudedog/internal/sessionindex"
-	"github.com/ishii1648/claudedog/internal/transcript"
+	"github.com/ishii1648/hitl-metrics/internal/permlog"
+	"github.com/ishii1648/hitl-metrics/internal/sessionindex"
+	"github.com/ishii1648/hitl-metrics/internal/transcript"
 )
 
 const dummyPRURL = "https://github.com/org/repo/pull/123"
 
-// DBPath returns the default path to claudedog.db.
+// DBPath returns the default path to hitl-metrics.db.
 func DBPath() string {
 	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".claude", "claudedog.db")
+	return filepath.Join(home, ".claude", "hitl-metrics.db")
 }
 
 // Run performs a full rebuild of the SQLite database from JSONL/log sources.

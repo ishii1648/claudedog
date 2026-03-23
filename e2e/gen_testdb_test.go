@@ -8,10 +8,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ishii1648/claudedog/internal/syncdb"
+	"github.com/ishii1648/hitl-metrics/internal/syncdb"
 )
 
-// TestGenTestDB generates e2e/testdata/claudedog.db from test fixtures.
+// TestGenTestDB generates e2e/testdata/hitl-metrics.db from test fixtures.
 // Run: CGO_ENABLED=0 GOTOOLCHAIN=local go test -run TestGenTestDB -v ./e2e/
 func TestGenTestDB(t *testing.T) {
 	projectRoot, err := filepath.Abs(filepath.Join("..", "."))
@@ -21,7 +21,7 @@ func TestGenTestDB(t *testing.T) {
 
 	indexPath := filepath.Join(projectRoot, "e2e", "testdata", "session-index.jsonl")
 	permLogPath := filepath.Join(projectRoot, "e2e", "testdata", "permission.log")
-	dbPath := filepath.Join(projectRoot, "e2e", "testdata", "claudedog.db")
+	dbPath := filepath.Join(projectRoot, "e2e", "testdata", "hitl-metrics.db")
 
 	// Create a temporary session-index.jsonl with absolute transcript paths.
 	tmpIndex := filepath.Join(t.TempDir(), "session-index.jsonl")

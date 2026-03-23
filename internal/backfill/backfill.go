@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ishii1648/claudedog/internal/sessionindex"
+	"github.com/ishii1648/hitl-metrics/internal/sessionindex"
 )
 
 type group struct {

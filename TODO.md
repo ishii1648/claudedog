@@ -1,6 +1,6 @@
 # TODO
 
-claudedog の開発タスクを管理する。完了したら CHANGELOG.md に記録して削除する。
+hitl-metrics の開発タスクを管理する。完了したら CHANGELOG.md に記録して削除する。
 
 ## 未着手
 

@@ -44,7 +44,7 @@ func TestRunWithPaths(t *testing.T) {
 			"2026-03-01T11:05:00Z session=s2 tool=Write\n",
 	), 0644)
 
-	dbPath := filepath.Join(dir, "claudedog.db")
+	dbPath := filepath.Join(dir, "hitl-metrics.db")
 	err := RunWithPaths(indexPath, permPath, dbPath)
 	if err != nil {
 		t.Fatal(err)
@@ -142,7 +142,7 @@ func TestRunWithPaths_MergedFilter(t *testing.T) {
 	permPath := filepath.Join(dir, "permission.log")
 	os.WriteFile(permPath, []byte(""), 0644)
 
-	dbPath := filepath.Join(dir, "claudedog.db")
+	dbPath := filepath.Join(dir, "hitl-metrics.db")
 	if err := RunWithPaths(indexPath, permPath, dbPath); err != nil {
 		t.Fatal(err)
 	}
@@ -190,7 +190,7 @@ func TestRunWithPaths_JoinInflationFix(t *testing.T) {
 			"2026-03-01T10:15:00Z session=s1 tool=Write\n",
 	), 0644)
 
-	dbPath := filepath.Join(dir, "claudedog.db")
+	dbPath := filepath.Join(dir, "hitl-metrics.db")
 	if err := RunWithPaths(indexPath, permPath, dbPath); err != nil {
 		t.Fatal(err)
 	}
@@ -224,7 +224,7 @@ func TestRunWithPaths_DummyPRURL(t *testing.T) {
 	permPath := filepath.Join(dir, "permission.log")
 	os.WriteFile(permPath, []byte(""), 0644)
 
-	dbPath := filepath.Join(dir, "claudedog.db")
+	dbPath := filepath.Join(dir, "hitl-metrics.db")
 	err := RunWithPaths(indexPath, permPath, dbPath)
 	if err != nil {
 		t.Fatal(err)

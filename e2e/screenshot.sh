@@ -26,7 +26,7 @@ for entry in "${PANELS[@]}"; do
   ID="${entry%%:*}"
   NAME="${entry##*:}"
   OUTFILE="${OUTDIR}/panel-${ID}-${NAME}.png"
-  URL="${BASE}/render/d-solo/claudedog/claudedog?panelId=${ID}&from=${FROM}&to=${TO}&width=${WIDTH}&height=${HEIGHT}&tz=${TZ}"
+  URL="${BASE}/render/d-solo/hitl-metrics/hitl-metrics?panelId=${ID}&from=${FROM}&to=${TO}&width=${WIDTH}&height=${HEIGHT}&tz=${TZ}"
   echo "Capturing panel ${ID} (${NAME})..."
   curl -sf -o "$OUTFILE" "$URL"
   echo "  → ${OUTFILE}"
@@ -35,7 +35,7 @@ done
 # Capture full dashboard for README
 FULL="${OUTDIR}/dashboard-full.png"
 echo "Capturing full dashboard..."
-curl -sf -o "$FULL" "${BASE}/render/d/claudedog/claudedog?from=${FROM}&to=${TO}&width=1200&height=1600&tz=${TZ}&kiosk"
+curl -sf -o "$FULL" "${BASE}/render/d/hitl-metrics/hitl-metrics?from=${FROM}&to=${TO}&width=1200&height=1600&tz=${TZ}&kiosk"
 echo "  → ${FULL}"
 
 # Also export key panels for README docs
