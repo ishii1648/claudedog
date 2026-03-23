@@ -32,6 +32,12 @@ for entry in "${PANELS[@]}"; do
   echo "  → ${OUTFILE}"
 done
 
+# Capture full dashboard for README
+FULL="${OUTDIR}/dashboard-full.png"
+echo "Capturing full dashboard..."
+curl -sf -o "$FULL" "${BASE}/render/d/claudedog/claudedog?from=${FROM}&to=${TO}&width=1200&height=1600&tz=${TZ}&kiosk"
+echo "  → ${FULL}"
+
 # Also export key panels for README docs
 DOCDIR="docs/images"
 mkdir -p "$DOCDIR"
@@ -42,5 +48,6 @@ for pair in "1:headline-kpi:dashboard-headline" "9:weekly-trend:dashboard-weekly
   DOC_NAME="${rest#*:}"
   cp "${OUTDIR}/panel-${ID}-${PANEL_NAME}.png" "${DOCDIR}/${DOC_NAME}.png"
 done
+cp "$FULL" "${DOCDIR}/dashboard-full.png"
 
 echo "Done: ${#PANELS[@]} panels captured in ${OUTDIR}"
