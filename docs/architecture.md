@@ -11,7 +11,7 @@
 3層構成:
 
 ```
-hooks（Shell）
+hooks（Go）
     ↓ ~/.claude/session-index.jsonl
     ↓ ~/.claude/logs/permission.log
     ↓ ~/.claude/hitl-metrics-state.json
@@ -26,18 +26,19 @@ Grafana ダッシュボード
 
 ## データ収集層（hooks）
 
-インストール先: `~/.local/share/hitl-metrics/hooks/`
+実装: `hitl-metrics hook <event>` サブコマンド（`internal/hook/` パッケージ）
 設定場所: `~/.claude/settings.json`（`hitl-metrics install` で登録）
 
-| hook イベント | スクリプト | 役割 | 出力先 |
+| hook イベント | サブコマンド | 役割 | 出力先 |
 |---|---|---|---|
-| SessionStart | `session-index.sh` | セッション開始時のメタデータを記録 | `~/.claude/session-index.jsonl` |
-| PostToolUse（Bash） | `session-index-post-tool.sh` | Bash 出力から PR URL を抽出して追記 | `~/.claude/session-index.jsonl` |
-| Stop | `stop.sh` | セッション終了時に backfill → sync-db を実行 | — |
-| PermissionRequest | `permission-log.sh` | Permission UI 発生イベントを記録 | `~/.claude/logs/permission.log` |
-| PreToolUse | `pretooluse-track.sh` | tool_name を一時記録（PermissionRequest 補助） | 一時ファイル |
+| SessionStart | `hitl-metrics hook session-start` | セッション開始時のメタデータを記録 + TODO 完了タスク移動 | `~/.claude/session-index.jsonl` |
+| Stop | `hitl-metrics hook stop` | セッション終了時に backfill → sync-db を実行（※） | — |
+| PermissionRequest | `hitl-metrics hook permission-request` | Permission UI 発生イベントを記録 | `~/.claude/logs/permission.log` |
+| PreToolUse | `hitl-metrics hook pre-tool-use` | tool_name を一時記録（PermissionRequest 補助） | 一時ファイル |
 
-> [ADR-001](adr/001-claude-session-index.md), [ADR-003](adr/003-claude-permission-ui-count-via-hook.md), [ADR-014](adr/014-permission-log-use-permission-request-hook.md), [ADR-019](adr/019-backfill-stop-hook-migration.md)
+> ※ Stop hook は**ブロッキング実行**（backfill && sync-db が完了するまでセッション終了を待機）。ただしセッション終了時に実行されるためユーザー操作への影響は限定的。処理時間は cursor ベースの増分処理・Phase 2 の時間条件スキップ（1時間未満なら省略）・goroutine 8並列 + 8秒タイムアウトで抑制している。
+
+> [ADR-001](adr/001-claude-session-index.md), [ADR-003](adr/003-claude-permission-ui-count-via-hook.md), [ADR-014](adr/014-permission-log-use-permission-request-hook.md), [ADR-019](adr/019-backfill-stop-hook-migration.md), [ADR-021](adr/021-migrate-shell-hooks-to-go-subcommands.md)
 
 ### 中間ファイル
 
@@ -46,6 +47,8 @@ Grafana ダッシュボード
 | `~/.claude/session-index.jsonl` | JSON Lines（追記のみ） | セッション単位のメタデータ。SessionStart で新規追記、PostToolUse/backfill で更新 |
 | `~/.claude/logs/permission.log` | 1イベント1行 | timestamp, session_id, tool_name |
 | `~/.claude/hitl-metrics-state.json` | JSON | backfill の cursor（last_backfill_offset, last_meta_check） |
+
+> **なぜ中間ファイルを挟むか:** hook は Claude Code セッション中に同期実行されるため高速に完了する必要がある。追記のみの軽量フォーマット（JSONL/log）に書き出し、構造化 DB への変換は `sync-db` に委譲することで「書き込みは軽く・読み込みは構造化」を実現している。また `sync-db` は毎回 DROP & CREATE でフル再構築するため、中間ファイルがソースオブレコードとして機能し、DB 破損時も再生成できる。
 
 ---
 
@@ -83,11 +86,24 @@ cursor（last_backfill_offset, last_meta_check）を更新
 
 ### sync-db の処理フロー
 
+中間ファイル → SQLite への ETL（Extract-Transform-Load）。毎回 DROP & CREATE でフル再構築し、1トランザクションで一括 COMMIT する。
+
 ```
-session-index.jsonl → sessions テーブル（task_type をブランチプレフィックスから自動抽出）
-permission.log      → permission_events テーブル
-transcript ファイル  → transcript_stats テーブル（is_ghost, tool_use_total 等を集計）
-                    → pr_metrics VIEW 作成
+1. session-index.jsonl を全件読み込み、session_id で重複排除（last wins）
+   → sessions テーブルに INSERT
+     - pr_urls 配列の最後の1件を pr_url カラムに変換
+     - parent_session_id の有無から is_subagent フラグを導出
+     - ブランチプレフィックス（feat/, fix/ 等）から task_type を抽出
+
+2. 各セッションの transcript ファイルをパース
+   → transcript_stats テーブルに INSERT
+     - tool_use_total, mid_session_msgs, ask_user_question を集計
+     - type:"user" エントリなしなら is_ghost = 1
+
+3. permission.log を全件パース
+   → permission_events テーブルに INSERT
+
+4. pr_metrics VIEW がスキーマ定義済みのため自動利用可能
 ```
 
 ---
