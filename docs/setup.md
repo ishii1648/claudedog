@@ -24,7 +24,19 @@ go build -o ~/.local/bin/hitl-metrics ./cmd/hitl-metrics/
 
 ## 2. Claude Code hook の登録
 
-`~/.claude/settings.json` に以下の hook 設定を追加します。`/path/to/hitl-metrics` はクローン先のパスに置き換えてください。
+リポジトリルートで `install` コマンドを実行すると、`~/.claude/settings.json` に hook が自動登録されます。
+
+```fish
+cd hitl-metrics
+hitl-metrics install
+```
+
+既に登録済みの hook はスキップされるため、何度実行しても安全です。
+
+<details>
+<summary>手動で設定する場合</summary>
+
+`~/.claude/settings.json` に以下を追加します。`/path/to/hitl-metrics` はクローン先のパスに置き換えてください。
 
 ```json
 {
@@ -65,6 +77,7 @@ go build -o ~/.local/bin/hitl-metrics ./cmd/hitl-metrics/
   }
 }
 ```
+</details>
 
 ### hook の役割
 
