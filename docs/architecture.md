@@ -45,7 +45,7 @@ Grafana ダッシュボード
 | ファイル | 形式 | 内容 |
 |---|---|---|
 | `~/.claude/session-index.jsonl` | JSON Lines（追記のみ） | セッション単位のメタデータ。SessionStart で新規追記、PostToolUse/backfill で更新 |
-| `~/.claude/logs/permission.log` | 1イベント1行 | timestamp, session_id, tool_name |
+| `~/.claude/logs/permission.log` | 1イベント1行 | timestamp, session_id, enriched tool_name（`Bash(CMD)`, `Edit(dir/subdir)` 形式）→ [ADR-022](adr/022-dashboard-actionability-improvements.md) |
 | `~/.claude/hitl-metrics-state.json` | JSON | backfill の cursor（last_backfill_offset, last_meta_check） |
 
 > **なぜ中間ファイルを挟むか:** hook は Claude Code セッション中に同期実行されるため高速に完了する必要がある。追記のみの軽量フォーマット（JSONL/log）に書き出し、構造化 DB への変換は `sync-db` に委譲することで「書き込みは軽く・読み込みは構造化」を実現している。また `sync-db` は毎回 DROP & CREATE でフル再構築するため、中間ファイルがソースオブレコードとして機能し、DB 破損時も再生成できる。
@@ -130,6 +130,7 @@ DB パス: `~/.local/share/hitl-metrics/hitl-metrics.db`
 | is_merged | INTEGER | PR がマージ済みなら 1 → [ADR-018](adr/018-metrics-redesign-merged-pr-scope.md) |
 | task_type | TEXT | feat/fix/docs/chore（ブランチプレフィックスから自動抽出）→ [ADR-018](adr/018-metrics-redesign-merged-pr-scope.md) |
 | review_comments | INTEGER | PR レビューコメント数 → [ADR-018](adr/018-metrics-redesign-merged-pr-scope.md) |
+| changes_requested | INTEGER | CHANGES_REQUESTED レビュー回数 → [ADR-022](adr/022-dashboard-actionability-improvements.md) |
 
 ### permission_events テーブル
 
@@ -138,7 +139,7 @@ DB パス: `~/.local/share/hitl-metrics/hitl-metrics.db`
 | id | INTEGER PK | 自動採番 |
 | timestamp | TEXT | イベント発生時刻 |
 | session_id | TEXT | セッション ID |
-| tool | TEXT | ツール名（Bash, Edit, Write 等） |
+| tool | TEXT | enriched ツール名（`Bash(git)`, `Edit(internal/syncdb)` 等）→ [ADR-022](adr/022-dashboard-actionability-improvements.md) |
 
 ### transcript_stats テーブル
 
@@ -162,7 +163,7 @@ PR 単位の集約ビュー。以下の条件でフィルタ:
 | `is_ghost = 0` | ゴーストセッションを除外 → [ADR-011](adr/011-session-count-excludes-subagent-sessions.md) |
 | `repo NOT IN ('ishii1648/dotfiles')` | dotfiles リポジトリを除外 |
 
-集約カラム: `pr_url`, `task_type`, `session_count`, `tool_use_total`, `mid_session_msgs`, `ask_user_question`, `perm_count`, `review_comments`, `perm_rate`
+集約カラム: `pr_url`, `task_type`, `session_count`, `tool_use_total`, `mid_session_msgs`, `ask_user_question`, `perm_count`, `review_comments`, `changes_requested`, `perm_rate`
 
 `perm_count` は `permission_events` をサブクエリで事前集計して JOIN（LEFT JOIN 膨張バグ防止）。> [ADR-018](adr/018-metrics-redesign-merged-pr-scope.md)
 
