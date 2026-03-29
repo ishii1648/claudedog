@@ -78,20 +78,14 @@ go build -o ~/.local/bin/hitl-metrics ./cmd/hitl-metrics/
 
 ## 3. データの同期
 
-hook でデータが蓄積されたら、SQLite DB を生成します。
+セッション終了時に Stop hook が `hitl-metrics backfill` → `hitl-metrics sync-db` を自動実行します。
 
-```fish
-# JSONL/log → SQLite 変換
-hitl-metrics sync-db
-```
+- **backfill**: PR URL 補完・マージ判定・レビューコメント数を `gh` CLI 経由で取得
+- **sync-db**: JSONL/log → SQLite 変換（`~/.claude/hitl-metrics.db` を生成）
 
-`~/.claude/hitl-metrics.db` が生成されます。
+cursor（`~/.claude/hitl-metrics-state.json`）により前回処理済み以降のエントリのみが走査されるため、高速に完了します。
 
-### PR URL の自動補完
-
-セッション終了時に Stop hook が自動的に `hitl-metrics backfill` と `hitl-metrics sync-db` を実行します。cursor（`~/.claude/hitl-metrics-state.json`）により前回処理済み以降のエントリのみが走査されるため、高速に完了します。
-
-手動で実行する場合:
+初回セットアップ時や手動で即時実行する場合:
 
 ```fish
 hitl-metrics backfill
