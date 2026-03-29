@@ -2,6 +2,13 @@
 
 hitl-metrics の変更履歴。新しいものが上。
 
+## 2026-03-29 (WIP)
+
+- GitHub Release でバイナリを自動ビルド・配布
+  - goreleaser + GitHub Actions でタグ push 時にマルチプラットフォームバイナリを生成（darwin/linux × amd64/arm64）
+  - hook スクリプトを go:embed でバイナリに内包、`hitl-metrics install` で `~/.local/share/hitl-metrics/hooks/` に展開
+  - `docs/setup.md` を Go ビルド不要のバイナリダウンロード手順に変更
+
 ## 2026-03-29
 
 - backfill を launchd 定期バッチから Stop hook に移行（ADR-019）
