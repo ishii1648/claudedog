@@ -50,6 +50,17 @@ go build -o ~/.local/bin/hitl-metrics ./cmd/hitl-metrics/
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/path/to/hitl-metrics/hooks/stop.sh"
+          }
+        ]
+      }
     ]
   }
 }
@@ -61,8 +72,9 @@ go build -o ~/.local/bin/hitl-metrics ./cmd/hitl-metrics/
 |------|----------|--------|
 | `session-index.sh` | セッション開始時 | `~/.claude/session-index.jsonl` |
 | `permission-log.sh` | Permission UI 表示時 | `~/.claude/logs/permission.log` |
+| `stop.sh` | セッション終了時 | `~/.claude/hitl-metrics.db`（backfill + sync-db） |
 
-登録後、Claude Code で新しいセッションを開始するとデータが記録されます。
+登録後、Claude Code で新しいセッションを開始するとデータが記録されます。セッション終了時に PR URL 補完と SQLite DB 同期が自動実行されます。
 
 ## 3. データの同期
 
@@ -75,44 +87,15 @@ hitl-metrics sync-db
 
 `~/.claude/hitl-metrics.db` が生成されます。
 
-### PR URL の自動補完（手動実行）
+### PR URL の自動補完
 
-セッションに PR URL が紐づいていない場合、`gh` CLI を使って自動補完できます。
+セッション終了時に Stop hook が自動的に `hitl-metrics backfill` と `hitl-metrics sync-db` を実行します。cursor（`~/.claude/hitl-metrics-state.json`）により前回処理済み以降のエントリのみが走査されるため、高速に完了します。
+
+手動で実行する場合:
 
 ```fish
-# PR URL・merged 判定・レビューコメント数を一括取得
 hitl-metrics backfill
-```
-
-### 定期同期の設定（macOS launchd）
-
-`backfill` と `sync-db` を毎時自動実行する LaunchAgent を設定します。
-
-```fish
-# plist をコピーしてプレースホルダを置換
-set bin_dir (dirname (which hitl-metrics))
-sed -e "s|__HITL_METRICS_BIN_DIR__|$bin_dir|g" -e "s|__HOME__|$HOME|g" \
-  configs/launchd/com.user.hitl-metrics-sync.plist \
-  > ~/Library/LaunchAgents/com.user.hitl-metrics-sync.plist
-
-# ログディレクトリを作成
-mkdir -p ~/.claude/logs
-
-# LaunchAgent を登録（即時実行される）
-launchctl load ~/Library/LaunchAgents/com.user.hitl-metrics-sync.plist
-```
-
-動作確認:
-
-```fish
-# ログを確認
-tail -f ~/.claude/logs/hitl-metrics-sync.log
-
-# 手動トリガー
-launchctl start com.user.hitl-metrics-sync
-
-# 停止・削除する場合
-launchctl unload ~/Library/LaunchAgents/com.user.hitl-metrics-sync.plist
+hitl-metrics sync-db
 ```
 
 ## 4. Grafana ダッシュボードの設定
@@ -154,7 +137,7 @@ jsonData:
 
 ## 5. 日常の運用
 
-LaunchAgent を設定済みであれば、`backfill` と `sync-db` は毎時自動実行されます。手動で即時更新する場合:
+Stop hook が登録済みであれば、セッション終了時に `backfill` と `sync-db` が自動実行されます。手動で即時更新する場合:
 
 ```fish
 hitl-metrics backfill
