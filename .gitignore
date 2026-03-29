@@ -2,3 +2,4 @@
 e2e/testdata/hitl-metrics.db
 e2e/testdata/hitl-metrics.db-shm
 e2e/testdata/hitl-metrics.db-wal
+hitl-metrics
