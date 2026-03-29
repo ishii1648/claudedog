@@ -1,56 +1,84 @@
 # ADR-021: hooks の Shell スクリプトを Go サブコマンドに統一する
 
-- ステータス: 採用済み
-- 領域: hooks / CLI
-- 日付: 2026-03-29
+## ステータス
+
+採用済み
+
+## 関連 ADR
+
+- 関連: ADR-001（session-index.sh の設計）
+- 関連: ADR-003（permission UI 計測の基盤）
+- 関連: ADR-014（PermissionRequest フックへの移行）
+- 関連: ADR-019（Stop hook での backfill 実行）
 
 ## コンテキスト
 
-hitl-metrics の hook は Shell スクリプト（Bash）で実装されていた。Go CLI バイナリに `go:embed` で Shell スクリプトを同梱し、`hitl-metrics install` で展開する方式を取っていた。
+データ収集層の hooks は現在5つの Shell スクリプトで実装されている。
 
-この方式には以下の課題があった:
-
-1. **二重メンテナンス**: ビジネスロジック（ツールアノテーション、TODO パース等）が Shell と Go に分散
-2. **テスト困難**: Shell スクリプトの awk 処理（todo-cleanup-check.sh）にユニットテストが書けない
-3. **配布の複雑さ**: バイナリに Shell スクリプトを embed し、install 時にファイルシステムに展開する二段階が必要
-4. **ロジック重複**: permission-log.sh と pretooluse-track.sh が同一のツールアノテーション処理を独立実装
-
-## 決定
-
-全 hook を `hitl-metrics hook <event-name>` Go サブコマンドとして実装する。
-
-### hook サブコマンド
-
-| サブコマンド | イベント | 旧スクリプト |
+| スクリプト | hook イベント | 行数 |
 |---|---|---|
-| `hook session-start` | SessionStart | session-index.sh |
-| `hook permission-request` | PermissionRequest | permission-log.sh |
-| `hook pre-tool-use` | PreToolUse | pretooluse-track.sh |
-| `hook stop` | Stop | stop.sh |
-| `hook todo-cleanup` | SessionStart | todo-cleanup-check.sh |
+| `session-index.sh` | SessionStart | ~30 |
+| `permission-log.sh` | PermissionRequest | ~35 |
+| `pretooluse-track.sh` | PreToolUse | ~30 |
+| `stop.sh` | Stop | ~3 |
+| `todo-cleanup-check.sh` | SessionStart | ~80 |
 
-### 主要な設計判断
+以下の課題がある：
 
-1. **ツールアノテーション共通化**: `AnnotateTool()` 関数で Bash/Read/Write/Edit/Grep の internal/external 分類を統一
-2. **install の簡素化**: `go:embed` + ファイル展開を廃止し、`hitl-metrics hook <event>` コマンド文字列を直接 settings.json に登録
-3. **stop hook は os/exec**: sqlite 依存を hook パッケージに持ち込まないよう、`hitl-metrics backfill` と `hitl-metrics sync-db` を外部コマンドとして呼び出す
+1. **ロジック重複**: `permission-log.sh` と `pretooluse-track.sh` で tool name アノテーション（internal/external 判定、Bash コマンド抽出）が完全に重複している
+2. **保守性**: `todo-cleanup-check.sh` は80行の embedded awk でテスト不能
+3. **配布の二重構造**: Go バイナリに Shell スクリプトを `//go:embed` で埋め込み → `ExtractHooks()` でディスクに展開 → `install` で `settings.json` に登録、という3段階が必要
+4. **言語の混在**: データ変換層（Go CLI）とデータ収集層（Shell）で実装言語が異なり、JSON パースや git 操作のロジックが共有できない
 
-## 結果
+## 設計案
 
-### 変更されるファイル
+### 案A: 全 Go 化 — `hitl-metrics hook <event>` サブコマンド（採用）
 
-- **新規**: `internal/hook/` パッケージ（input.go, annotate.go, sessionstart.go, permissionrequest.go, pretooluse.go, stop.go, todocleanup.go + テスト）
-- **変更**: `cmd/hitl-metrics/main.go`（hook サブコマンド追加）、`internal/install/install.go`（Go サブコマンド形式に変更）
-- **削除**: `hooks/*.sh`、`internal/install/embed.go`、`internal/install/hooks/`
-- **新規**: `docs/architecture.md`
+全 hook を `hitl-metrics hook <event-name>` サブコマンドとして Go で実装する。
 
-### メリット
+```
+hitl-metrics hook session-start       # session-index.sh + todo-cleanup-check.sh
+hitl-metrics hook permission-request  # permission-log.sh
+hitl-metrics hook pre-tool-use        # pretooluse-track.sh
+hitl-metrics hook stop                # stop.sh（backfill + sync-db 呼び出し）
+```
 
-- Shell スクリプト廃止により Go 単一バイナリで完結
-- AnnotateTool のロジック重複が解消
-- todo-cleanup の TODO パース処理に Go テストが追加
-- install が `--hooks-dir` 不要になりシンプル化
+`settings.json` の hook 登録は以下のように変わる：
 
-### 注意点
+```json
+// Before
+{ "type": "command", "command": "~/.local/share/hitl-metrics/hooks/session-index.sh" }
 
-- 既存の Shell hook が settings.json に登録済みの環境では、`hitl-metrics install` を再実行して新形式のエントリを追加する必要がある（旧エントリは手動削除）
+// After
+{ "type": "command", "command": "hitl-metrics hook session-start" }
+```
+
+**メリット**:
+- Shell スクリプトの埋め込み・展開・パス管理が不要になる（`embed.go`、`ExtractHooks()` を削除）
+- tool annotation ロジックを `internal/hook/` パッケージの共通関数に統合できる
+- `todo-cleanup-check` の awk パースを Go で書き直し、テスト可能にできる
+- `hitl-metrics install` は PATH 上のバイナリを前提とするだけで済む
+
+**デメリット**:
+- Go バイナリの起動コスト（~10ms）が hook ごとに発生する。ただし hook は人間の操作間隔（秒単位）で発火するため体感影響なし
+- 既存ユーザーは `hitl-metrics install` の再実行が必要
+
+### 案B: Shell 維持（却下）
+
+現状維持。重複ロジックと awk の保守性問題が残り続ける。
+
+### 案C: 一部のみ Go 化（却下）
+
+複雑な hook（todo-cleanup-check、permission-log + pretooluse-track）のみ Go 化する。配布の二重構造（Go サブコマンド + Shell スクリプト展開）が残り、install コマンドの複雑性が増す。
+
+### 変更が必要なファイル（affected-scope）
+
+| ファイル / パッケージ | 変更内容 |
+|---|---|
+| `internal/hook/` (新規) | hook サブコマンドのハンドラ実装（session-start, permission-request, pre-tool-use, stop） |
+| `cmd/hitl-metrics/main.go` | `hook` サブコマンドのルーティング追加 |
+| `internal/install/install.go` | `hookDefs` のコマンドを Go サブコマンドに変更 |
+| `internal/install/embed.go` | 削除（Shell スクリプト埋め込み不要） |
+| `internal/install/hooks/*.sh` | 削除 |
+| `hooks/*.sh` | 削除 |
+| `docs/architecture.md` | 「hooks（Shell）」→「hooks（Go）」に更新 |
