@@ -31,8 +31,8 @@ func TestRunWithPaths(t *testing.T) {
 	// Create session-index.jsonl (is_merged=true for merged PR sessions)
 	indexPath := filepath.Join(dir, "session-index.jsonl")
 	os.WriteFile(indexPath, []byte(
-		`{"timestamp":"2026-03-01 10:00:00","session_id":"s1","cwd":"/tmp","repo":"user/repo","branch":"feat/add-metrics","pr_urls":["https://github.com/user/repo/pull/1"],"transcript":"`+t1Path+`","parent_session_id":"","backfill_checked":false,"is_merged":true,"review_comments":3,"changes_requested":1}`+"\n"+
-			`{"timestamp":"2026-03-01 11:00:00","session_id":"s2","cwd":"/tmp","repo":"user/repo","branch":"feat/add-metrics","pr_urls":["https://github.com/user/repo/pull/1"],"transcript":"`+t2Path+`","parent_session_id":"","backfill_checked":false,"is_merged":true,"review_comments":3,"changes_requested":1}`+"\n"+
+		`{"timestamp":"2026-03-01 10:00:00","ended_at":"2026-03-01 12:00:00","session_id":"s1","cwd":"/tmp","repo":"user/repo","branch":"feat/add-metrics","pr_urls":["https://github.com/user/repo/pull/1"],"transcript":"`+t1Path+`","parent_session_id":"","backfill_checked":false,"is_merged":true,"review_comments":3,"changes_requested":1}`+"\n"+
+			`{"timestamp":"2026-03-01 11:00:00","ended_at":"2026-03-01 11:30:00","session_id":"s2","cwd":"/tmp","repo":"user/repo","branch":"feat/add-metrics","pr_urls":["https://github.com/user/repo/pull/1"],"transcript":"`+t2Path+`","parent_session_id":"","backfill_checked":false,"is_merged":true,"review_comments":3,"changes_requested":1}`+"\n"+
 			`{"timestamp":"2026-03-01 12:00:00","session_id":"s3","cwd":"/tmp","repo":"ishii1648/dotfiles","branch":"main","pr_urls":["https://github.com/ishii1648/dotfiles/pull/5"],"transcript":"`+t3Path+`","parent_session_id":"","backfill_checked":false,"is_merged":true}`+"\n",
 	), 0644)
 
@@ -59,14 +59,18 @@ func TestRunWithPaths(t *testing.T) {
 	// Check new columns on sessions
 	var isMerged int
 	var taskType string
+	var endedAt string
 	var reviewComments int
 	var changesRequested int
-	db.QueryRow("SELECT is_merged, task_type, review_comments, changes_requested FROM sessions WHERE session_id = 's1'").Scan(&isMerged, &taskType, &reviewComments, &changesRequested)
+	db.QueryRow("SELECT is_merged, task_type, ended_at, review_comments, changes_requested FROM sessions WHERE session_id = 's1'").Scan(&isMerged, &taskType, &endedAt, &reviewComments, &changesRequested)
 	if isMerged != 1 {
 		t.Errorf("is_merged: got %d, want 1", isMerged)
 	}
 	if taskType != "feat" {
 		t.Errorf("task_type: got %q, want %q", taskType, "feat")
+	}
+	if endedAt != "2026-03-01 12:00:00" {
+		t.Errorf("ended_at: got %q", endedAt)
 	}
 	if reviewComments != 3 {
 		t.Errorf("review_comments: got %d, want 3", reviewComments)
@@ -96,13 +100,14 @@ func TestRunWithPaths(t *testing.T) {
 	var prReviewComments int
 	var prChangesRequested int
 	var inputTokens, outputTokens, cacheWriteTokens, cacheReadTokens, totalTokens int64
+	var peakParallelSessions int
 	var tokensPerSession, tokensPerToolUse, prPerMillionTokens float64
 	db.QueryRow(`SELECT pr_url, task_type, session_count, review_comments, changes_requested,
-		input_tokens, output_tokens, cache_write_tokens, cache_read_tokens, total_tokens,
+		input_tokens, output_tokens, cache_write_tokens, cache_read_tokens, total_tokens, peak_parallel_sessions,
 		tokens_per_session, tokens_per_tool_use, pr_per_million_tokens
 		FROM pr_metrics`).Scan(
 		&prURL, &prTaskType, &sessCount, &prReviewComments, &prChangesRequested,
-		&inputTokens, &outputTokens, &cacheWriteTokens, &cacheReadTokens, &totalTokens,
+		&inputTokens, &outputTokens, &cacheWriteTokens, &cacheReadTokens, &totalTokens, &peakParallelSessions,
 		&tokensPerSession, &tokensPerToolUse, &prPerMillionTokens,
 	)
 	if prURL != "https://github.com/user/repo/pull/1" {
@@ -134,6 +139,9 @@ func TestRunWithPaths(t *testing.T) {
 	}
 	if totalTokens != 1650 {
 		t.Errorf("total_tokens: got %d, want 1650", totalTokens)
+	}
+	if peakParallelSessions != 2 {
+		t.Errorf("peak_parallel_sessions: got %d, want 2", peakParallelSessions)
 	}
 	if tokensPerSession != 825.0 {
 		t.Errorf("tokens_per_session: got %.1f, want 825.0", tokensPerSession)

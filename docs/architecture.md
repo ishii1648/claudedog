@@ -31,7 +31,8 @@ Grafana ダッシュボード
 | hook イベント | サブコマンド | 役割 | 出力先 |
 |---|---|---|---|
 | SessionStart | `hitl-metrics hook session-start` | セッション開始時のメタデータを記録 + TODO 完了タスク移動 | `~/.claude/session-index.jsonl` |
-| Stop | `hitl-metrics hook stop` | セッション終了時に backfill → sync-db を実行（※） | — |
+| SessionEnd | `hitl-metrics hook session-end` | セッション終了時刻と終了理由を記録し、DB を同期 | `~/.claude/session-index.jsonl`, `~/.claude/hitl-metrics.db` |
+| Stop | `hitl-metrics hook stop` | 応答完了時に backfill → sync-db を実行（※） | — |
 
 > ※ Stop hook は**ブロッキング実行**（backfill && sync-db が完了するまでセッション終了を待機）。ただしセッション終了時に実行されるためユーザー操作への影響は限定的。処理時間は cursor ベースの増分処理・Phase 2 の時間条件スキップ（1時間未満なら省略）・goroutine 8並列 + 8秒タイムアウトで抑制している。
 
@@ -41,7 +42,7 @@ Grafana ダッシュボード
 
 | ファイル | 形式 | 内容 |
 |---|---|---|
-| `~/.claude/session-index.jsonl` | JSON Lines（追記のみ） | セッション単位のメタデータ。SessionStart で新規追記、PostToolUse/backfill で更新 |
+| `~/.claude/session-index.jsonl` | JSON Lines | セッション単位のメタデータ。SessionStart で新規追記、SessionEnd/backfill で更新 |
 | `~/.claude/hitl-metrics-state.json` | JSON | backfill の cursor（last_backfill_offset, last_meta_check） |
 
 > **なぜ中間ファイルを挟むか:** hook は Claude Code セッション中に同期実行されるため高速に完了する必要がある。追記のみの軽量フォーマット（JSONL）に書き出し、構造化 DB への変換は `sync-db` に委譲することで「書き込みは軽く・読み込みは構造化」を実現している。また `sync-db` は毎回 DROP & CREATE でフル再構築するため、中間ファイルがソースオブレコードとして機能し、DB 破損時も再生成できる。
@@ -89,6 +90,7 @@ cursor（last_backfill_offset, last_meta_check）を更新
    → sessions テーブルに INSERT
      - pr_urls 配列の最後の1件を pr_url カラムに変換
      - parent_session_id の有無から is_subagent フラグを導出
+     - ended_at / end_reason からセッション終了情報を保持
      - ブランチプレフィックス（feat/, fix/ 等）から task_type を抽出
 
 2. 各セッションの transcript ファイルをパース
@@ -119,6 +121,8 @@ DB パス: `~/.claude/hitl-metrics.db`
 | pr_url | TEXT | PR URL（単一値） |
 | transcript | TEXT | transcript ファイルパス |
 | parent_session_id | TEXT | 親セッション ID（サブエージェント判定用） |
+| ended_at | TEXT | セッション終了時刻 |
+| end_reason | TEXT | SessionEnd hook の終了理由 |
 | is_subagent | INTEGER | サブエージェントなら 1 |
 | backfill_checked | INTEGER | backfill 処理済みなら 1 |
 | is_merged | INTEGER | PR がマージ済みなら 1 → [ADR-018](adr/018-metrics-redesign-merged-pr-scope.md) |
@@ -153,9 +157,9 @@ PR 単位の集約ビュー。以下の条件でフィルタ:
 | `is_ghost = 0` | ゴーストセッションを除外 → [ADR-011](adr/011-session-count-excludes-subagent-sessions.md) |
 | `repo NOT IN ('ishii1648/dotfiles')` | dotfiles リポジトリを除外 |
 
-集約カラム: `pr_url`, `task_type`, `model`, `session_count`, `tool_use_total`, `mid_session_msgs`, `ask_user_question`, `input_tokens`, `output_tokens`, `cache_write_tokens`, `cache_read_tokens`, `review_comments`, `changes_requested`, `total_tokens`, `tokens_per_session`, `tokens_per_tool_use`, `pr_per_million_tokens`
+集約カラム: `pr_url`, `task_type`, `model`, `session_count`, `tool_use_total`, `mid_session_msgs`, `ask_user_question`, `input_tokens`, `output_tokens`, `cache_write_tokens`, `cache_read_tokens`, `peak_parallel_sessions`, `review_comments`, `changes_requested`, `total_tokens`, `tokens_per_session`, `tokens_per_tool_use`, `pr_per_million_tokens`
 
-`total_tokens` は input / output / cache write / cache read token の合計。`pr_per_million_tokens` は 100万 token あたりに完了できた PR 数。> [ADR-023](adr/023-pr-token-efficiency-metrics.md)
+`total_tokens` は input / output / cache write / cache read token の合計。`pr_per_million_tokens` は 100万 token あたりに完了できた PR 数。`peak_parallel_sessions` は同一 PR に紐づくトップレベル Claude Code セッションの最大同時実行数。> [ADR-023](adr/023-pr-token-efficiency-metrics.md)
 
 ---
 

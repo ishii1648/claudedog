@@ -15,6 +15,8 @@ CREATE TABLE sessions (
     pr_url            TEXT NOT NULL DEFAULT '',
     transcript        TEXT NOT NULL DEFAULT '',
     parent_session_id TEXT NOT NULL DEFAULT '',
+    ended_at          TEXT NOT NULL DEFAULT '',
+    end_reason        TEXT NOT NULL DEFAULT '',
     is_subagent       INTEGER NOT NULL DEFAULT 0,
     backfill_checked  INTEGER NOT NULL DEFAULT 0,
     is_merged         INTEGER NOT NULL DEFAULT 0,
@@ -65,6 +67,21 @@ FROM (
         COALESCE(SUM(ts.output_tokens), 0) AS output_tokens,
         COALESCE(SUM(ts.cache_write_tokens), 0) AS cache_write_tokens,
         COALESCE(SUM(ts.cache_read_tokens), 0) AS cache_read_tokens,
+        COALESCE(MAX((
+            SELECT COUNT(*)
+            FROM sessions sx
+            LEFT JOIN transcript_stats tsx ON sx.session_id = tsx.session_id
+            WHERE sx.pr_url = s.pr_url
+              AND sx.pr_url != ''
+              AND sx.is_subagent = 0
+              AND sx.is_merged = 1
+              AND COALESCE(tsx.is_ghost, 0) = 0
+              AND sx.repo NOT IN ('ishii1648/dotfiles')
+              AND sx.ended_at != ''
+              AND s.timestamp != ''
+              AND datetime(sx.timestamp) <= datetime(s.timestamp)
+              AND datetime(sx.ended_at) > datetime(s.timestamp)
+        )), 0) AS peak_parallel_sessions,
         MAX(s.review_comments) AS review_comments,
         MAX(s.changes_requested) AS changes_requested
     FROM sessions s
