@@ -197,7 +197,7 @@
       "datasource": { "type": "frser-sqlite-datasource", "uid": "hitl-metrics" },
       "targets": [
         {
-          "rawQueryText": "SELECT pr_url, task_type, model, total_tokens, tokens_per_session, tokens_per_tool_use, pr_per_million_tokens, input_tokens, output_tokens, cache_write_tokens, cache_read_tokens, session_count, tool_use_total, mid_session_msgs, ask_user_question, review_comments, changes_requested FROM pr_metrics WHERE total_tokens > 0 ORDER BY total_tokens DESC",
+          "rawQueryText": "SELECT pr_url, task_type, total_tokens, tokens_per_tool_use, pr_per_million_tokens, session_count, mid_session_msgs, ask_user_question, changes_requested FROM pr_metrics WHERE total_tokens > 0 ORDER BY total_tokens DESC",
           "refId": "A"
         }
       ],
@@ -208,7 +208,7 @@
             "matcher": { "id": "byName", "options": "pr_url" },
             "properties": [
               { "id": "links", "value": [{ "title": "Open PR", "url": "${__data.fields.pr_url}" }] },
-              { "id": "custom.width", "value": 320 }
+              { "id": "custom.width", "value": 300 }
             ]
           },
           {
@@ -242,7 +242,7 @@
       "datasource": { "type": "frser-sqlite-datasource", "uid": "hitl-metrics" },
       "targets": [
         {
-          "rawQueryText": "SELECT pr_url, session_count FROM pr_metrics ORDER BY session_count DESC, pr_url",
+          "rawQueryText": "SELECT replace(replace(pr_url, 'https://github.com/', ''), '/pull/', '#') AS pr, session_count FROM pr_metrics ORDER BY session_count DESC, pr_url",
           "refId": "A"
         }
       ],
@@ -255,7 +255,7 @@
         "overrides": []
       },
       "options": {
-        "orientation": "vertical",
+        "orientation": "horizontal",
         "showValue": "always",
         "barWidth": 0.8
       }
@@ -269,7 +269,7 @@
       "datasource": { "type": "frser-sqlite-datasource", "uid": "hitl-metrics" },
       "targets": [
         {
-          "rawQueryText": "SELECT pr_url, tokens_per_tool_use FROM pr_metrics WHERE tokens_per_tool_use IS NOT NULL ORDER BY tokens_per_tool_use DESC, pr_url LIMIT 20",
+          "rawQueryText": "SELECT replace(replace(pr_url, 'https://github.com/', ''), '/pull/', '#') AS pr, tokens_per_tool_use FROM pr_metrics WHERE tokens_per_tool_use IS NOT NULL ORDER BY tokens_per_tool_use DESC, pr_url LIMIT 20",
           "refId": "A"
         }
       ],
@@ -281,7 +281,7 @@
         "overrides": []
       },
       "options": {
-        "orientation": "vertical",
+        "orientation": "horizontal",
         "showValue": "always",
         "barWidth": 0.8
       }
