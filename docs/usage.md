@@ -25,7 +25,7 @@ Stop hook がセッション終了時に `hitl-metrics backfill` → `hitl-metri
 
 - **backfill Phase 1（URL 補完）**: `pr_urls` が空のセッションに対し、`gh pr list` で PR URL を取得
 - **backfill Phase 2（マージ判定）**: 未マージ PR の `is_merged` と `review_comments` を更新（1時間間隔）
-- **sync-db**: JSONL/transcript → SQLite 変換（`~/.claude/hitl-metrics.db` を生成）。PR 単位の `peak_parallel_sessions` も算出
+- **sync-db**: JSONL/transcript → SQLite 変換（`~/.claude/hitl-metrics.db` を生成）。日次・週次の `avg_concurrent_sessions` / `peak_concurrent_sessions` も算出
 
 cursor（`~/.claude/hitl-metrics-state.json`）により前回処理済み以降のエントリのみが走査されるため、高速に完了します。
 

@@ -100,14 +100,13 @@ func TestRunWithPaths(t *testing.T) {
 	var prReviewComments int
 	var prChangesRequested int
 	var inputTokens, outputTokens, cacheWriteTokens, cacheReadTokens, totalTokens int64
-	var peakParallelSessions int
 	var tokensPerSession, tokensPerToolUse, prPerMillionTokens float64
 	db.QueryRow(`SELECT pr_url, task_type, session_count, review_comments, changes_requested,
-		input_tokens, output_tokens, cache_write_tokens, cache_read_tokens, total_tokens, peak_parallel_sessions,
+		input_tokens, output_tokens, cache_write_tokens, cache_read_tokens, total_tokens,
 		tokens_per_session, tokens_per_tool_use, pr_per_million_tokens
 		FROM pr_metrics`).Scan(
 		&prURL, &prTaskType, &sessCount, &prReviewComments, &prChangesRequested,
-		&inputTokens, &outputTokens, &cacheWriteTokens, &cacheReadTokens, &totalTokens, &peakParallelSessions,
+		&inputTokens, &outputTokens, &cacheWriteTokens, &cacheReadTokens, &totalTokens,
 		&tokensPerSession, &tokensPerToolUse, &prPerMillionTokens,
 	)
 	if prURL != "https://github.com/user/repo/pull/1" {
@@ -140,9 +139,6 @@ func TestRunWithPaths(t *testing.T) {
 	if totalTokens != 1650 {
 		t.Errorf("total_tokens: got %d, want 1650", totalTokens)
 	}
-	if peakParallelSessions != 2 {
-		t.Errorf("peak_parallel_sessions: got %d, want 2", peakParallelSessions)
-	}
 	if tokensPerSession != 825.0 {
 		t.Errorf("tokens_per_session: got %.1f, want 825.0", tokensPerSession)
 	}
@@ -151,6 +147,27 @@ func TestRunWithPaths(t *testing.T) {
 	}
 	if prPerMillionTokens != 606.06 {
 		t.Errorf("pr_per_million_tokens: got %.2f, want 606.06", prPerMillionTokens)
+	}
+
+	var concurrencyRows int
+	db.QueryRow("SELECT COUNT(*) FROM session_concurrency_daily").Scan(&concurrencyRows)
+	if concurrencyRows != 1 {
+		t.Errorf("session_concurrency_daily count: got %d, want 1", concurrencyRows)
+	}
+	var avgConcurrent float64
+	var peakConcurrent int
+	db.QueryRow("SELECT avg_concurrent_sessions, peak_concurrent_sessions FROM session_concurrency_daily WHERE day = '2026-03-01'").Scan(&avgConcurrent, &peakConcurrent)
+	if avgConcurrent != 1.5 {
+		t.Errorf("avg_concurrent_sessions: got %.2f, want 1.50", avgConcurrent)
+	}
+	if peakConcurrent != 2 {
+		t.Errorf("peak_concurrent_sessions: got %d, want 2", peakConcurrent)
+	}
+
+	var weeklyPeak int
+	db.QueryRow("SELECT peak_concurrent_sessions FROM session_concurrency_weekly WHERE week_start = '2026-02-23'").Scan(&weeklyPeak)
+	if weeklyPeak != 2 {
+		t.Errorf("weekly peak_concurrent_sessions: got %d, want 2", weeklyPeak)
 	}
 }
 

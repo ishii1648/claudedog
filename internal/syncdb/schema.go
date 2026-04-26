@@ -2,6 +2,9 @@ package syncdb
 
 const createTablesSQL = `
 DROP VIEW IF EXISTS pr_metrics;
+DROP VIEW IF EXISTS session_concurrency_weekly;
+DROP VIEW IF EXISTS session_concurrency_daily;
+DROP VIEW IF EXISTS session_intervals;
 DROP TABLE IF EXISTS permission_events;
 DROP TABLE IF EXISTS transcript_stats;
 DROP TABLE IF EXISTS sessions;
@@ -41,6 +44,49 @@ CREATE TABLE transcript_stats (
 CREATE INDEX idx_sessions_pr_url ON sessions(pr_url);
 CREATE INDEX idx_sessions_repo ON sessions(repo);
 
+CREATE VIEW session_intervals AS
+SELECT
+    s.session_id,
+    s.timestamp AS started_at,
+    s.ended_at,
+    s.repo,
+    s.branch,
+    s.pr_url,
+    s.task_type
+FROM sessions s
+LEFT JOIN transcript_stats ts ON s.session_id = ts.session_id
+WHERE s.is_subagent = 0
+  AND COALESCE(ts.is_ghost, 0) = 0
+  AND s.repo NOT IN ('ishii1648/dotfiles')
+  AND s.timestamp != ''
+  AND s.ended_at != '';
+
+CREATE VIEW session_concurrency_daily AS
+SELECT
+    date(anchor.started_at) AS day,
+    ROUND(AVG((
+        SELECT COUNT(*)
+        FROM session_intervals active
+        WHERE datetime(active.started_at) <= datetime(anchor.started_at)
+          AND datetime(active.ended_at) > datetime(anchor.started_at)
+    )), 2) AS avg_concurrent_sessions,
+    MAX((
+        SELECT COUNT(*)
+        FROM session_intervals active
+        WHERE datetime(active.started_at) <= datetime(anchor.started_at)
+          AND datetime(active.ended_at) > datetime(anchor.started_at)
+    )) AS peak_concurrent_sessions
+FROM session_intervals anchor
+GROUP BY date(anchor.started_at);
+
+CREATE VIEW session_concurrency_weekly AS
+SELECT
+    date(day, 'weekday 0', '-6 days') AS week_start,
+    ROUND(AVG(avg_concurrent_sessions), 2) AS avg_concurrent_sessions,
+    MAX(peak_concurrent_sessions) AS peak_concurrent_sessions
+FROM session_concurrency_daily
+GROUP BY date(day, 'weekday 0', '-6 days');
+
 CREATE VIEW pr_metrics AS
 SELECT
     pm.*,
@@ -67,21 +113,6 @@ FROM (
         COALESCE(SUM(ts.output_tokens), 0) AS output_tokens,
         COALESCE(SUM(ts.cache_write_tokens), 0) AS cache_write_tokens,
         COALESCE(SUM(ts.cache_read_tokens), 0) AS cache_read_tokens,
-        COALESCE(MAX((
-            SELECT COUNT(*)
-            FROM sessions sx
-            LEFT JOIN transcript_stats tsx ON sx.session_id = tsx.session_id
-            WHERE sx.pr_url = s.pr_url
-              AND sx.pr_url != ''
-              AND sx.is_subagent = 0
-              AND sx.is_merged = 1
-              AND COALESCE(tsx.is_ghost, 0) = 0
-              AND sx.repo NOT IN ('ishii1648/dotfiles')
-              AND sx.ended_at != ''
-              AND s.timestamp != ''
-              AND datetime(sx.timestamp) <= datetime(s.timestamp)
-              AND datetime(sx.ended_at) > datetime(s.timestamp)
-        )), 0) AS peak_parallel_sessions,
         MAX(s.review_comments) AS review_comments,
         MAX(s.changes_requested) AS changes_requested
     FROM sessions s
