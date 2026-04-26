@@ -6,9 +6,9 @@ grafana-fixtures:
 grafana-up: grafana-fixtures
 	docker compose up -d
 	@echo "Waiting for Grafana to be ready..."
-	@for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30; do \
-		if curl -sf http://localhost:13000/api/health > /dev/null 2>&1; then \
-			echo "Grafana is ready at http://localhost:13000"; \
+	@for i in $$(seq 1 60); do \
+		if curl -sf http://localhost:$${GRAFANA_PORT:-13000}/api/health > /dev/null 2>&1; then \
+			echo "Grafana is ready at http://localhost:$${GRAFANA_PORT:-13000}"; \
 			exit 0; \
 		fi; \
 		sleep 1; \

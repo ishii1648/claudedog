@@ -2,7 +2,7 @@ services:
   grafana:
     image: grafana/grafana-oss:11.5.2
     ports:
-      - "13000:3000"
+      - "${GRAFANA_PORT:-13000}:3000"
     environment:
       - GF_INSTALL_PLUGINS=frser-sqlite-datasource
       - GF_AUTH_ANONYMOUS_ENABLED=true

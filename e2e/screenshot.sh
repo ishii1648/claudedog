@@ -18,10 +18,10 @@ TZ="Asia/Tokyo"
 declare -a PANELS=(
   "1:headline-kpi:${WIDTH}:${HEIGHT}"
   "9:weekly-trend:${WIDTH}:${HEIGHT}"
-  "12:task-type-perm-rate:${WIDTH}:${HEIGHT}"
+  "13:task-type-token-rate:${WIDTH}:${HEIGHT}"
   "2:pr-scorecard:${WIDTH}:900"
-  "10:tool-breakdown-table:${WIDTH}:700"
-  "11:tool-breakdown-bar:${WIDTH}:${HEIGHT}"
+  "14:session-count:${WIDTH}:${HEIGHT}"
+  "15:tokens-per-tool-use:${WIDTH}:${HEIGHT}"
 )
 
 for entry in "${PANELS[@]}"; do
