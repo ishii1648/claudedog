@@ -6,6 +6,30 @@ import (
 	"sort"
 )
 
+// appendUniqueURLs returns existing URLs followed by URLs from `add` that are
+// not already present, preserving both the existing order and the order in
+// which new URLs are appended. The returned slice is non-nil when at least one
+// URL is added (added=true); otherwise the original slice is returned.
+func appendUniqueURLs(existing, add []string) (merged []string, added bool) {
+	seen := make(map[string]struct{}, len(existing))
+	for _, u := range existing {
+		seen[u] = struct{}{}
+	}
+	merged = append([]string(nil), existing...)
+	for _, u := range add {
+		if _, ok := seen[u]; ok {
+			continue
+		}
+		seen[u] = struct{}{}
+		merged = append(merged, u)
+		added = true
+	}
+	if !added {
+		return existing, false
+	}
+	return merged, true
+}
+
 // Update adds new PR URLs to the session identified by sessionID.
 // Returns true if the file was modified.
 func Update(indexPath string, sessionID string, newURLs []string) (bool, error) {
@@ -26,29 +50,18 @@ func Update(indexPath string, sessionID string, newURLs []string) (bool, error) 
 		if s.SessionID != sessionID {
 			continue
 		}
-		existing := make(map[string]struct{})
-		for _, u := range s.PRURLs {
-			existing[u] = struct{}{}
+		merged, added := appendUniqueURLs(s.PRURLs, newURLs)
+		if !added {
+			continue
 		}
-		before := len(existing)
-		for _, u := range newURLs {
-			existing[u] = struct{}{}
+		s.PRURLs = merged
+		sessions[i] = s
+		raw, err := remarshalWithUpdate(raws[i], "pr_urls", merged)
+		if err != nil {
+			return false, err
 		}
-		if len(existing) > before {
-			merged := make([]string, 0, len(existing))
-			for u := range existing {
-				merged = append(merged, u)
-			}
-			sort.Strings(merged)
-			s.PRURLs = merged
-			sessions[i] = s
-			raw, err := remarshalWithUpdate(raws[i], "pr_urls", merged)
-			if err != nil {
-				return false, err
-			}
-			raws[i] = raw
-			updated = true
-		}
+		raws[i] = raw
+		updated = true
 	}
 
 	if updated {
@@ -124,28 +137,10 @@ func UpdateByBranch(indexPath string, targetRepo, targetBranch, newURL string) (
 		if s.Branch != targetBranch {
 			continue
 		}
-		// Check if pr_urls field exists and URL is not already present
-		has := false
-		for _, u := range s.PRURLs {
-			if u == newURL {
-				has = true
-				break
-			}
-		}
-		if has {
+		merged, added := appendUniqueURLs(s.PRURLs, []string{newURL})
+		if !added {
 			continue
 		}
-		// Merge new URL
-		urlSet := make(map[string]struct{})
-		for _, u := range s.PRURLs {
-			urlSet[u] = struct{}{}
-		}
-		urlSet[newURL] = struct{}{}
-		merged := make([]string, 0, len(urlSet))
-		for u := range urlSet {
-			merged = append(merged, u)
-		}
-		sort.Strings(merged)
 
 		raw, err := remarshalWithUpdate(raws[i], "pr_urls", merged)
 		if err != nil {

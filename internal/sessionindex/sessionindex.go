@@ -63,30 +63,57 @@ func ReadAll(path string) ([]json.RawMessage, []Session, error) {
 	return raws, sessions, scanner.Err()
 }
 
-// WriteAll writes sessions back to the JSONL file.
-// Each raw message is written as a single line.
+// WriteAll writes sessions back to the JSONL file atomically.
+// 一時ファイルに書き込んでから rename することで、書き込み途中で失敗しても
+// 既存の session-index.jsonl が truncate / 部分書き込み状態にならないようにする。
 func WriteAll(path string, raws []json.RawMessage) error {
-	f, err := os.Create(path)
+	dir := filepath.Dir(path)
+	tmp, err := os.CreateTemp(dir, ".session-index-*.jsonl.tmp")
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	tmpName := tmp.Name()
+	cleanup := func() { _ = os.Remove(tmpName) }
 
-	w := bufio.NewWriter(f)
+	w := bufio.NewWriter(tmp)
 	for i, raw := range raws {
 		if i > 0 {
 			if err := w.WriteByte('\n'); err != nil {
+				tmp.Close()
+				cleanup()
 				return err
 			}
 		}
 		if _, err := w.Write(raw); err != nil {
+			tmp.Close()
+			cleanup()
 			return err
 		}
 	}
 	if err := w.WriteByte('\n'); err != nil {
+		tmp.Close()
+		cleanup()
 		return err
 	}
-	return w.Flush()
+	if err := w.Flush(); err != nil {
+		tmp.Close()
+		cleanup()
+		return err
+	}
+	if err := tmp.Sync(); err != nil {
+		tmp.Close()
+		cleanup()
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		cleanup()
+		return err
+	}
+	if err := os.Rename(tmpName, path); err != nil {
+		cleanup()
+		return err
+	}
+	return nil
 }
 
 // NormalizeRepo removes trailing ".git" suffix.

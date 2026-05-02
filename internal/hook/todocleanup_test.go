@@ -7,17 +7,17 @@ import (
 
 func TestParseTodoAndExtract(t *testing.T) {
 	tests := []struct {
-		name           string
-		input          string
-		wantCompleted  []string
-		wantRemaining  string
+		name          string
+		input         string
+		wantCompleted []string
+		wantRemaining string
 	}{
 		{
 			name: "all criteria checked → task removed",
 			input: strings.Join([]string{
 				"# TODO",
 				"",
-				"## 未着手",
+				"## 実装タスク",
 				"",
 				"- タスクA",
 				"  - [x] 条件1",
@@ -26,25 +26,25 @@ func TestParseTodoAndExtract(t *testing.T) {
 				"- タスクB",
 				"  - [ ] 条件1",
 				"",
-				"## 完了",
+				"## 検討中",
 			}, "\n"),
 			wantCompleted: []string{"タスクA"},
 			wantRemaining: strings.Join([]string{
 				"# TODO",
 				"",
-				"## 未着手",
+				"## 実装タスク",
 				"",
 				"",
 				"- タスクB",
 				"  - [ ] 条件1",
 				"",
-				"## 完了",
+				"## 検討中",
 			}, "\n"),
 		},
 		{
 			name: "no completed tasks → no changes",
 			input: strings.Join([]string{
-				"## 未着手",
+				"## 実装タスク",
 				"",
 				"- タスクA",
 				"  - [ ] 条件1",
@@ -52,7 +52,7 @@ func TestParseTodoAndExtract(t *testing.T) {
 			}, "\n"),
 			wantCompleted: nil,
 			wantRemaining: strings.Join([]string{
-				"## 未着手",
+				"## 実装タスク",
 				"",
 				"- タスクA",
 				"  - [ ] 条件1",
@@ -62,7 +62,7 @@ func TestParseTodoAndExtract(t *testing.T) {
 		{
 			name: "multiple completed tasks",
 			input: strings.Join([]string{
-				"## 未着手",
+				"## 実装タスク",
 				"",
 				"- タスクA",
 				"  - [x] 条件1",
@@ -76,7 +76,7 @@ func TestParseTodoAndExtract(t *testing.T) {
 			}, "\n"),
 			wantCompleted: []string{"タスクA", "タスクB"},
 			wantRemaining: strings.Join([]string{
-				"## 未着手",
+				"## 実装タスク",
 				"",
 				"",
 				"",
@@ -87,7 +87,7 @@ func TestParseTodoAndExtract(t *testing.T) {
 		{
 			name: "task without criteria → not removed",
 			input: strings.Join([]string{
-				"## 未着手",
+				"## 実装タスク",
 				"",
 				"- タスクA（条件なし）",
 				"",
@@ -96,7 +96,7 @@ func TestParseTodoAndExtract(t *testing.T) {
 			}, "\n"),
 			wantCompleted: []string{"タスクB"},
 			wantRemaining: strings.Join([]string{
-				"## 未着手",
+				"## 実装タスク",
 				"",
 				"- タスクA（条件なし）",
 				"",
@@ -105,12 +105,12 @@ func TestParseTodoAndExtract(t *testing.T) {
 		{
 			name: "other sections untouched",
 			input: strings.Join([]string{
-				"## 進行中",
+				"## 検討中",
 				"",
-				"- 進行タスク",
+				"- 検討タスク",
 				"  - [x] 条件1",
 				"",
-				"## 未着手",
+				"## 実装タスク",
 				"",
 				"- タスクA",
 				"  - [x] 条件1",
@@ -121,12 +121,12 @@ func TestParseTodoAndExtract(t *testing.T) {
 			}, "\n"),
 			wantCompleted: []string{"タスクA"},
 			wantRemaining: strings.Join([]string{
-				"## 進行中",
+				"## 検討中",
 				"",
-				"- 進行タスク",
+				"- 検討タスク",
 				"  - [x] 条件1",
 				"",
-				"## 未着手",
+				"## 実装タスク",
 				"",
 				"",
 				"## メモ",
@@ -135,20 +135,20 @@ func TestParseTodoAndExtract(t *testing.T) {
 			}, "\n"),
 		},
 		{
-			name:          "no 未着手 section → no changes",
-			input:         "## 進行中\n\n- タスク\n  - [x] 条件\n",
+			name:          "no 実装タスク section → no changes",
+			input:         "## 検討中\n\n- タスク\n  - [x] 条件\n",
 			wantCompleted: nil,
-			wantRemaining: "## 進行中\n\n- タスク\n  - [x] 条件\n",
+			wantRemaining: "## 検討中\n\n- タスク\n  - [x] 条件\n",
 		},
 		{
 			name: "task at EOF without trailing newline",
 			input: strings.Join([]string{
-				"## 未着手",
+				"## 実装タスク",
 				"- タスクA",
 				"  - [x] 条件1",
 			}, "\n"),
 			wantCompleted: []string{"タスクA"},
-			wantRemaining: "## 未着手",
+			wantRemaining: "## 実装タスク",
 		},
 	}
 
@@ -156,7 +156,6 @@ func TestParseTodoAndExtract(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			remaining, completed := ParseTodoAndExtract(tt.input)
 
-			// Check completed names
 			if len(completed) != len(tt.wantCompleted) {
 				t.Errorf("completed count = %d, want %d\ncompleted: %v",
 					len(completed), len(tt.wantCompleted), completed)
@@ -168,7 +167,6 @@ func TestParseTodoAndExtract(t *testing.T) {
 				}
 			}
 
-			// Check remaining content
 			if remaining != tt.wantRemaining {
 				t.Errorf("remaining mismatch:\ngot:\n%s\nwant:\n%s",
 					remaining, tt.wantRemaining)

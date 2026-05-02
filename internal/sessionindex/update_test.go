@@ -67,6 +67,77 @@ func TestUpdate_Deduplicate(t *testing.T) {
 	}
 }
 
+func TestUpdate_PreservesAppendOrder(t *testing.T) {
+	// Existing URLs are intentionally in non-alphabetical order to verify
+	// that the existing sequence is preserved (not re-sorted).
+	p := writeTempJSONL(t, []string{
+		`{"timestamp":"2026-03-01 10:00:00","session_id":"s1","cwd":"/tmp","repo":"user/repo","branch":"main","pr_urls":["https://github.com/user/repo/pull/9","https://github.com/user/repo/pull/2"],"transcript":"","parent_session_id":"","backfill_checked":false}`,
+	})
+
+	// Add two more URLs. Existing order + append order must be preserved.
+	updated, err := Update(p, "s1", []string{
+		"https://github.com/user/repo/pull/2", // duplicate, ignored
+		"https://github.com/user/repo/pull/5",
+		"https://github.com/user/repo/pull/1",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !updated {
+		t.Fatal("expected updated=true")
+	}
+
+	sessions := readSessions(t, p)
+	want := []string{
+		"https://github.com/user/repo/pull/9",
+		"https://github.com/user/repo/pull/2",
+		"https://github.com/user/repo/pull/5",
+		"https://github.com/user/repo/pull/1",
+	}
+	if len(sessions[0].PRURLs) != len(want) {
+		t.Fatalf("pr_urls length = %d, want %d (%v)", len(sessions[0].PRURLs), len(want), sessions[0].PRURLs)
+	}
+	for i, u := range want {
+		if sessions[0].PRURLs[i] != u {
+			t.Errorf("pr_urls[%d] = %q, want %q", i, sessions[0].PRURLs[i], u)
+		}
+	}
+
+	// sync-db adopts the last URL — verify it matches the latest appended URL.
+	last := sessions[0].PRURLs[len(sessions[0].PRURLs)-1]
+	if last != "https://github.com/user/repo/pull/1" {
+		t.Errorf("last pr_url = %q, want %q (sync-db adopts last)", last, "https://github.com/user/repo/pull/1")
+	}
+}
+
+func TestUpdateByBranch_PreservesAppendOrder(t *testing.T) {
+	p := writeTempJSONL(t, []string{
+		`{"timestamp":"2026-03-01 10:00:00","session_id":"s1","cwd":"/tmp","repo":"user/repo","branch":"feat","pr_urls":["https://github.com/user/repo/pull/9"],"transcript":"","parent_session_id":"","backfill_checked":false}`,
+	})
+
+	updated, err := UpdateByBranch(p, "user/repo", "feat", "https://github.com/user/repo/pull/3")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !updated {
+		t.Fatal("expected updated=true")
+	}
+
+	sessions := readSessions(t, p)
+	want := []string{
+		"https://github.com/user/repo/pull/9",
+		"https://github.com/user/repo/pull/3",
+	}
+	if len(sessions[0].PRURLs) != len(want) {
+		t.Fatalf("pr_urls = %v, want %v", sessions[0].PRURLs, want)
+	}
+	for i, u := range want {
+		if sessions[0].PRURLs[i] != u {
+			t.Errorf("pr_urls[%d] = %q, want %q", i, sessions[0].PRURLs[i], u)
+		}
+	}
+}
+
 func TestUpdate_NoMatch(t *testing.T) {
 	p := writeTempJSONL(t, []string{
 		`{"timestamp":"2026-03-01 10:00:00","session_id":"s1","cwd":"/tmp","repo":"user/repo","branch":"main","pr_urls":[],"transcript":"","parent_session_id":"","backfill_checked":false}`,
