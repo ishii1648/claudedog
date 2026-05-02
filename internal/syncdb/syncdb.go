@@ -63,6 +63,26 @@ type agentSource struct {
 	IndexPath string
 }
 
+// ensureSchema applies schema.sql only when the embedded hash differs from the
+// hash recorded in schema_meta. A missing schema_meta table or row is treated
+// as a mismatch so legacy DBs and freshly-created files both rebuild cleanly.
+// On the hot path (hash matches) no DDL runs, so concurrent Grafana queries
+// don't see tables disappear mid-flight.
+func ensureSchema(db *sql.DB) error {
+	var current string
+	err := db.QueryRow("SELECT value FROM schema_meta WHERE key = 'schema_hash'").Scan(&current)
+	if err == nil && current == schemaHash {
+		return nil
+	}
+	if _, err := db.Exec(schemaSQL); err != nil {
+		return fmt.Errorf("apply schema: %w", err)
+	}
+	if _, err := db.Exec("INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('schema_hash', ?)", schemaHash); err != nil {
+		return fmt.Errorf("write schema hash: %w", err)
+	}
+	return nil
+}
+
 func runWithSources(sources []agentSource, dbPath string) error {
 	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
@@ -74,8 +94,8 @@ func runWithSources(sources []agentSource, dbPath string) error {
 		return fmt.Errorf("pragma: %w", err)
 	}
 
-	if _, err := db.Exec(createTablesSQL); err != nil {
-		return fmt.Errorf("create tables: %w", err)
+	if err := ensureSchema(db); err != nil {
+		return err
 	}
 
 	tx, err := db.Begin()

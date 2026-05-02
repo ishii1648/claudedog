@@ -1,0 +1,23 @@
+name: Schema hash
+
+on:
+  pull_request:
+    paths:
+      - "internal/syncdb/**"
+      - ".github/workflows/schema-hash.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Regenerate schema hash
+        run: go generate ./...
+      - name: Detect uncommitted hash drift
+        run: git diff --exit-code

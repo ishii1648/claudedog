@@ -384,6 +384,127 @@ func TestRunForAgents_SessionIDCollisionAcrossAgents(t *testing.T) {
 	}
 }
 
+func TestRunWithPaths_IdempotentRerun(t *testing.T) {
+	dir := t.TempDir()
+
+	tPath := filepath.Join(dir, "t.jsonl")
+	os.WriteFile(tPath, []byte(
+		`{"type":"user","message":{"content":"hello"}}`+"\n"+
+			`{"type":"assistant","message":{"model":"claude-sonnet-4-5","usage":{"input_tokens":100,"output_tokens":20,"cache_creation_input_tokens":0,"cache_read_input_tokens":0},"content":[{"type":"tool_use","name":"Read"}]}}`+"\n",
+	), 0644)
+
+	indexPath := filepath.Join(dir, "session-index.jsonl")
+	os.WriteFile(indexPath, []byte(
+		`{"timestamp":"2026-03-01 10:00:00","ended_at":"2026-03-01 10:30:00","session_id":"s1","cwd":"/tmp","repo":"u/r","branch":"feat/x","pr_urls":["https://github.com/u/r/pull/1"],"transcript":"`+tPath+`","parent_session_id":"","is_merged":true,"review_comments":1}`+"\n",
+	), 0644)
+
+	dbPath := filepath.Join(dir, "hitl-metrics.db")
+
+	if err := RunWithPaths(indexPath, dbPath); err != nil {
+		t.Fatalf("first run: %v", err)
+	}
+
+	// Mutate the source row so the second run must overwrite, not duplicate.
+	os.WriteFile(indexPath, []byte(
+		`{"timestamp":"2026-03-01 10:00:00","ended_at":"2026-03-01 10:30:00","session_id":"s1","cwd":"/tmp","repo":"u/r","branch":"feat/x","pr_urls":["https://github.com/u/r/pull/1"],"transcript":"`+tPath+`","parent_session_id":"","is_merged":true,"review_comments":7}`+"\n",
+	), 0644)
+
+	if err := RunWithPaths(indexPath, dbPath); err != nil {
+		t.Fatalf("second run: %v", err)
+	}
+
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	var sessionRows, statsRows int
+	db.QueryRow("SELECT COUNT(*) FROM sessions").Scan(&sessionRows)
+	if sessionRows != 1 {
+		t.Errorf("sessions row count: got %d, want 1 (UPSERT must not duplicate)", sessionRows)
+	}
+	db.QueryRow("SELECT COUNT(*) FROM transcript_stats").Scan(&statsRows)
+	if statsRows != 1 {
+		t.Errorf("transcript_stats row count: got %d, want 1 (UPSERT must not duplicate)", statsRows)
+	}
+
+	var reviewComments int
+	db.QueryRow("SELECT review_comments FROM sessions WHERE session_id = 's1'").Scan(&reviewComments)
+	if reviewComments != 7 {
+		t.Errorf("review_comments: got %d, want 7 (latest value must overwrite)", reviewComments)
+	}
+
+	var hash string
+	db.QueryRow("SELECT value FROM schema_meta WHERE key = 'schema_hash'").Scan(&hash)
+	if hash == "" {
+		t.Error("schema_meta schema_hash row missing after run")
+	}
+}
+
+func TestRunWithPaths_StaleSchemaFallback(t *testing.T) {
+	dir := t.TempDir()
+	dbPath := filepath.Join(dir, "hitl-metrics.db")
+
+	// Pre-create a DB whose recorded hash does not match the embedded schema.
+	// The legacy permission_events table from earlier versions is also created
+	// to confirm the rebuild path still drops it cleanly.
+	pre, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pre.Exec(`
+CREATE TABLE schema_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+INSERT INTO schema_meta (key, value) VALUES ('schema_hash', 'stale-hash-from-old-build');
+CREATE TABLE permission_events (id INTEGER PRIMARY KEY);
+`); err != nil {
+		t.Fatalf("seed legacy db: %v", err)
+	}
+	pre.Close()
+
+	tPath := filepath.Join(dir, "t.jsonl")
+	os.WriteFile(tPath, []byte(
+		`{"type":"user","message":{"content":"hello"}}`+"\n"+
+			`{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Read"}]}}`+"\n",
+	), 0644)
+
+	indexPath := filepath.Join(dir, "session-index.jsonl")
+	os.WriteFile(indexPath, []byte(
+		`{"timestamp":"2026-03-01 10:00:00","session_id":"s1","cwd":"/tmp","repo":"u/r","branch":"feat/x","pr_urls":[],"transcript":"`+tPath+`","parent_session_id":"","is_merged":false}`+"\n",
+	), 0644)
+
+	if err := RunWithPaths(indexPath, dbPath); err != nil {
+		t.Fatalf("run with stale hash: %v", err)
+	}
+
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	var hash string
+	if err := db.QueryRow("SELECT value FROM schema_meta WHERE key = 'schema_hash'").Scan(&hash); err != nil {
+		t.Fatalf("schema_meta read: %v", err)
+	}
+	if hash == "stale-hash-from-old-build" {
+		t.Error("schema_hash was not refreshed after rebuild")
+	}
+
+	// Legacy permission_events table must be dropped by the rebuild.
+	var legacyExists int
+	db.QueryRow("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='permission_events'").Scan(&legacyExists)
+	if legacyExists != 0 {
+		t.Error("legacy permission_events table not dropped during rebuild")
+	}
+
+	var sessionRows int
+	db.QueryRow("SELECT COUNT(*) FROM sessions").Scan(&sessionRows)
+	if sessionRows != 1 {
+		t.Errorf("sessions row count: got %d, want 1", sessionRows)
+	}
+}
+
 func mustAgent(name, dir string) *agent.Agent {
 	return &agent.Agent{Name: name, DataDir: dir}
 }
