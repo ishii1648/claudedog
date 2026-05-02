@@ -26,7 +26,6 @@ declare -a PANELS=(
   "2:pr-scorecard:${WIDTH}:900"
   "14:session-count:${WIDTH}:${HEIGHT}"
   "15:tokens-per-tool-use:${WIDTH}:${HEIGHT}"
-  "23:rework-hotspots:${WIDTH}:${HEIGHT}"
 )
 
 for entry in "${PANELS[@]}"; do
