@@ -2,7 +2,7 @@
 name: git-ship
 description: >-
   Use when implementation is complete and code needs to be shipped.
-  Triggered automatically per CLAUDE.md when there are uncommitted changes
+  Triggered automatically per AGENTS.md when there are uncommitted changes
   on feature/fix/docs/chore branches. Also use when the user says
   "git-ship", "ship", "シップ", "ship して".
   Runs: contextual-commit → push → Draft PR.

@@ -2,13 +2,13 @@
 name: impl
 description: Use when the user says "impl", "実装", "実装セッション起動",
   "TODO実装して", or wants to launch implementation sessions for TODO tasks.
-  Parses TODO.md and launches worktree + tmux session + Claude Code sessions.
+  Parses TODO.md and launches worktree + tmux session + Codex sessions.
 version: 0.1.0
 ---
 
 # impl
 
-TODO.md の `実装タスク` セクションを検出し、タスクごとに worktree + tmux session + Claude Code を起動して並列実装をディスパッチする。
+TODO.md の `実装タスク` セクションを検出し、タスクごとに worktree + tmux session + Codex を起動して並列実装をディスパッチする。
 
 ## 前提条件
 
@@ -84,10 +84,10 @@ git worktree add "<main_worktree_path>@<branch_dir_name>" -b "<branch_name>" ori
 #### 5-2: settings.local.json コピー
 
 ```bash
-cp .claude/settings.local.json "<worktree_path>/.claude/settings.local.json"
+cp .Codex/settings.local.json "<worktree_path>/.Codex/settings.local.json"
 ```
 
-（`.claude/settings.local.json` が存在する場合のみ）
+（`.Codex/settings.local.json` が存在する場合のみ）
 
 #### 5-3: tmux window 作成
 
@@ -99,19 +99,19 @@ tmux new-window -n "<window_name>" -c "<worktree_path>"
 
 - `<window_name>`: ブランチ名の `/` を `-` に置換（例: `feat/adr-017` → `feat-adr-017`）
 
-### Step 6: Claude Code 起動と初期プロンプト送信
+### Step 6: Codex 起動と初期プロンプト送信
 
 各 tmux window に対して以下を実行する:
 
-#### 6-1: Claude Code 起動
+#### 6-1: Codex 起動
 
 ```bash
-tmux send-keys -t "<window_name>" "claude" Enter
+tmux send-keys -t "<window_name>" "Codex" Enter
 ```
 
-#### 6-2: 初期プロンプト送信（Claude 起動待ち後）
+#### 6-2: 初期プロンプト送信（Codex 起動待ち後）
 
-Claude Code の起動を 5 秒待ってから初期プロンプトを送信する。
+Codex の起動を 5 秒待ってから初期プロンプトを送信する。
 
 TODO.md から抽出したタスクタイトル・詳細行を含む初期プロンプトを構築する。
 
@@ -158,4 +158,4 @@ tmux window 一覧: tmux list-windows
 - impl は main ブランチからのみ実行可能
 - `gw_add` は tmux switch-client を含むため直接呼び出さない。worktree 作成・tmux window 作成・settings コピーを個別に実行する
 - 各タスクの worktree 作成は順次実行する（git worktree add は並列実行不可）
-- `tmux send-keys` での初期プロンプト送信は Claude Code の起動待ち（5秒）が必要
+- `tmux send-keys` での初期プロンプト送信は Codex の起動待ち（5秒）が必要
