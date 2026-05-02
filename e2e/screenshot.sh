@@ -17,11 +17,17 @@ TZ="Asia/Tokyo"
 # Format: "panelId:name:width:height"  (width/height override defaults)
 declare -a PANELS=(
   "1:headline-kpi:${WIDTH}:${HEIGHT}"
-  "9:weekly-trend:${WIDTH}:${HEIGHT}"
-  "13:task-type-token-rate:${WIDTH}:${HEIGHT}"
+  "9:weekly-token-consumption:${WIDTH}:${HEIGHT}"
+  "20:weekly-sessions-and-prs:${WIDTH}:${HEIGHT}"
+  "16:weekly-concurrent-sessions:${WIDTH}:${HEIGHT}"
+  "12:weekly-pr-per-million-tokens:${WIDTH}:${HEIGHT}"
+  "21:weekly-tokens-per-session:${WIDTH}:${HEIGHT}"
+  "22:weekly-changes-requested-rate:${WIDTH}:${HEIGHT}"
   "2:pr-scorecard:${WIDTH}:900"
   "14:session-count:${WIDTH}:${HEIGHT}"
   "15:tokens-per-tool-use:${WIDTH}:${HEIGHT}"
+  "23:rework-hotspots:${WIDTH}:${HEIGHT}"
+  "13:task-type-token-rate:${WIDTH}:${HEIGHT}"
 )
 
 for entry in "${PANELS[@]}"; do
@@ -42,7 +48,7 @@ echo "  → ${FULL}"
 # Also export key panels for README docs
 DOCDIR="docs/images"
 mkdir -p "$DOCDIR"
-for pair in "1:headline-kpi:dashboard-headline" "9:weekly-trend:dashboard-weekly-trend" "2:pr-scorecard:dashboard-pr-scorecard"; do
+for pair in "1:headline-kpi:dashboard-headline" "9:weekly-token-consumption:dashboard-weekly-trend" "2:pr-scorecard:dashboard-pr-scorecard"; do
   ID="${pair%%:*}"
   rest="${pair#*:}"
   PANEL_NAME="${rest%%:*}"
