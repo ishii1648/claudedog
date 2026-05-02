@@ -7,6 +7,10 @@ hitl-metrics の変更履歴。新しいものが上。
 - Makefile に `build` / `install` / `uninstall` ターゲットを追加
   - `make install` で `$(PREFIX)/bin/hitl-metrics`（デフォルト `~/.local/bin`）にビルド配置
   - PATH 未含有時に警告
+- ダッシュボードを「状態評価」「改善のきっかけ」の 2 領域に再編
+  - 状態評価行: PR 非依存の期間集計指標のみ採用（活動量・スループット・コスト・期間集計効率・質の推移）。PR 単位効率指標は複雑度が平準化されないため除外
+  - 改善のきっかけ行: PR 単位の外れ値検出を集約し、`changes_requested` / `ask_user_question` / `mid_session_msgs` を組み合わせたリワークホットスポット表を追加
+  - schema に週別集計 view (`pr_merged_at_approx`, `weekly_pr_metrics`, `weekly_session_metrics`) を追加
 
 ## 2026-04-27
 
