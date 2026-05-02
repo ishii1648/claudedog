@@ -27,7 +27,6 @@ declare -a PANELS=(
   "14:session-count:${WIDTH}:${HEIGHT}"
   "15:tokens-per-tool-use:${WIDTH}:${HEIGHT}"
   "23:rework-hotspots:${WIDTH}:${HEIGHT}"
-  "13:task-type-token-rate:${WIDTH}:${HEIGHT}"
 )
 
 for entry in "${PANELS[@]}"; do

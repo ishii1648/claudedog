@@ -355,13 +355,13 @@
     {
       "id": 14,
       "title": "PR 別 session_count 分布",
-      "description": "多セッション PR の外れ値検出。脱線・やり直しの兆候",
+      "description": "多セッション PR の外れ値検出。脱線・やり直しの兆候。上位 10 件のみ",
       "type": "barchart",
-      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 22 },
+      "gridPos": { "h": 12, "w": 8, "x": 16, "y": 22 },
       "datasource": { "type": "frser-sqlite-datasource", "uid": "hitl-metrics" },
       "targets": [
         {
-          "rawQueryText": "SELECT '#' || substr(pr_url, instr(pr_url, '/pull/') + 6) AS pr, session_count FROM pr_metrics ORDER BY session_count DESC, pr_url",
+          "rawQueryText": "SELECT replace(replace(pr_url, 'https://github.com/', ''), '/pull/', '#') AS pr, session_count FROM pr_metrics ORDER BY session_count DESC, pr_url LIMIT 10",
           "refId": "A"
         }
       ],
@@ -382,13 +382,13 @@
     {
       "id": 15,
       "title": "PR 別 tokens / tool_use",
-      "description": "1 tool_use あたりの token 消費が大きい PR。ファイル肥大・無駄な再読みの兆候",
+      "description": "1 tool_use あたりの token 消費が大きい PR。ファイル肥大・無駄な再読みの兆候。上位 10 件のみ",
       "type": "barchart",
-      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 28 },
+      "gridPos": { "h": 12, "w": 8, "x": 16, "y": 34 },
       "datasource": { "type": "frser-sqlite-datasource", "uid": "hitl-metrics" },
       "targets": [
         {
-          "rawQueryText": "SELECT '#' || substr(pr_url, instr(pr_url, '/pull/') + 6) AS pr, tokens_per_tool_use FROM pr_metrics WHERE tokens_per_tool_use IS NOT NULL ORDER BY tokens_per_tool_use DESC, pr_url LIMIT 20",
+          "rawQueryText": "SELECT replace(replace(pr_url, 'https://github.com/', ''), '/pull/', '#') AS pr, tokens_per_tool_use FROM pr_metrics WHERE tokens_per_tool_use IS NOT NULL ORDER BY tokens_per_tool_use DESC, pr_url LIMIT 10",
           "refId": "A"
         }
       ],
@@ -410,7 +410,7 @@
       "title": "リワークホットスポット",
       "description": "changes_requested・ask_user_question・mid_session_msgs を組み合わせて、指示不足やリワーク多発 PR を検出する",
       "type": "table",
-      "gridPos": { "h": 8, "w": 16, "x": 0, "y": 34 },
+      "gridPos": { "h": 12, "w": 16, "x": 0, "y": 34 },
       "datasource": { "type": "frser-sqlite-datasource", "uid": "hitl-metrics" },
       "targets": [
         {
@@ -460,37 +460,6 @@
         "showHeader": true,
         "cellHeight": "lg",
         "sortBy": [{ "displayName": "changes_requested", "desc": true }]
-      }
-    },
-    {
-      "id": 13,
-      "title": "タスク種別 avg tokens / PR",
-      "description": "task_type ごとのコスト傾向。同種タスク内での比較に使う",
-      "type": "barchart",
-      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 34 },
-      "datasource": { "type": "frser-sqlite-datasource", "uid": "hitl-metrics" },
-      "targets": [
-        {
-          "rawQueryText": "SELECT CASE WHEN task_type = '' THEN 'other' ELSE task_type END AS task_type, ROUND(AVG(total_tokens), 0) AS avg_tokens_per_pr, COUNT(*) AS pr_count FROM pr_metrics WHERE total_tokens > 0 GROUP BY task_type ORDER BY avg_tokens_per_pr DESC",
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "color": { "fixedColor": "#f59e0b", "mode": "fixed" },
-          "unit": "short"
-        },
-        "overrides": [
-          {
-            "matcher": { "id": "byName", "options": "pr_count" },
-            "properties": [{ "id": "custom.hideFrom", "value": { "legend": true, "tooltip": false, "viz": true } }]
-          }
-        ]
-      },
-      "options": {
-        "orientation": "vertical",
-        "showValue": "always",
-        "barWidth": 0.8
       }
     }
   ],
