@@ -15,6 +15,8 @@ hitl-metrics の変更履歴。新しいものが上。
   - `pr_merged_at_approx` view を `ended_at` 欠損時に session timestamp で代替するよう変更 — hook 未実装・abort・強制終了でも拾える
   - e2e fixture の timestamp をテスト実行時を基準にシフトするよう変更 — Grafana を直接開いても Last 30 days のデフォルト range で常にデータが描画される
   - 活動量サマリーを 4 つの個別 stat panel に分割して横並び化 — 1 panel 内 cell の自動レイアウトでは horizontal を確実に維持できないため
+  - 週別 trend を単一指標パネルに分割（merged PR 数 / PR per 1M tokens / tokens per session / changes_requested 発生率）— 複合パネルは軸スケール差で読みづらかった
+  - PR スコアカードの `total_tokens` 背景色グラデーションを削除 — 列内相対値での塗り分けが「赤＝悪い」と誤読されるため。`changes_requested` の絶対 threshold 色分けは維持
 
 ## 2026-04-27
 
