@@ -2,6 +2,12 @@
 
 hitl-metrics の変更履歴。新しいものが上。
 
+## 2026-05-02
+
+- Makefile に `build` / `install` / `uninstall` ターゲットを追加
+  - `make install` で `$(PREFIX)/bin/hitl-metrics`（デフォルト `~/.local/bin`）にビルド配置
+  - PATH 未含有時に警告
+
 ## 2026-04-27
 
 - PR 単位のトークン消費効率メトリクスを導入（ADR-023）
