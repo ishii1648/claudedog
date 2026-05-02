@@ -4,6 +4,14 @@ hitl-metrics の変更履歴。新しいものが上。
 
 ## 2026-05-02
 
+- ドキュメント構成を ADR から spec/design/history に移行
+  - `docs/spec.md`（外部契約）/ `docs/design.md`（実装方針）/ `docs/history.md`（経緯）を新規作成
+  - 既存 23 ADR は `docs/archive/adr/` に退避（参照のみ、新規作成はしない）
+  - `docs/architecture.md` を spec/design に分離して廃止
+  - `.claude/skills/` から `create-adr` / `evaluate-adr` / `adr-reference` / `dispatch` を削除（dispatch は user skill 化済み）
+  - `impl` skill の ADR 番号によるブランチ分岐を撤去し TODO.md タイトルベースに統一
+  - `Makefile` の `worktree-create` / `worktree-remove` を `ADR=NNN` 引数から `BRANCH=feat/xxx` 引数に変更
+  - `CLAUDE.md` の意思決定方針を spec/design/history ベースに更新
 - Makefile に `build` / `install` / `uninstall` ターゲットを追加
   - `make install` で `$(PREFIX)/bin/hitl-metrics`（デフォルト `~/.local/bin`）にビルド配置
   - PATH 未含有時に警告
