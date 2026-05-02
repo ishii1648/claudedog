@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/ishii1648/hitl-metrics/internal/agent"
@@ -11,11 +12,16 @@ import (
 	"github.com/ishii1648/hitl-metrics/internal/sessionindex"
 	"github.com/ishii1648/hitl-metrics/internal/setup"
 	"github.com/ishii1648/hitl-metrics/internal/syncdb"
+	"github.com/ishii1648/hitl-metrics/internal/upgrade"
 )
+
+// version is overwritten at build time via -ldflags "-X main.version=<tag>".
+// goreleaser sets this from the git tag; `go build` without ldflags leaves "dev".
+var version = "dev"
 
 func main() {
 	if len(os.Args) < 2 {
-		printUsage()
+		printUsage(os.Stderr)
 		os.Exit(1)
 	}
 
@@ -36,17 +42,21 @@ func main() {
 		runDoctor()
 	case "hook":
 		runHook(os.Args[2:])
-	case "version":
-		fmt.Println("hitl-metrics version unknown")
+	case "upgrade":
+		runUpgrade(os.Args[2:])
+	case "version", "--version", "-v":
+		fmt.Printf("hitl-metrics %s\n", version)
+	case "help", "--help", "-h":
+		printUsage(os.Stdout)
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command: %s\n", os.Args[1])
-		printUsage()
+		printUsage(os.Stderr)
 		os.Exit(1)
 	}
 }
 
-func printUsage() {
-	fmt.Fprintln(os.Stderr, `Usage: hitl-metrics <command> [args...]
+func printUsage(w io.Writer) {
+	fmt.Fprintln(w, `Usage: hitl-metrics <command> [args...]
 
 Commands:
   setup [--agent <claude|codex>]         セットアップ案内を表示（hook 登録は dotfiles または手動）
@@ -66,7 +76,9 @@ Commands:
     permission-request                   permission ログを追記（Claude のみ）
     todo-cleanup                         main ブランチで TODO.md の完了タスクを削除
   install                                廃止予定 alias。setup を呼び出して同等の案内を表示
+  upgrade [--check]                      GitHub Releases から最新版を取得して自身を置き換える（--check は確認のみ）
   version                                version を表示
+  help                                   このヘルプを表示
 
 Agent precedence: --agent → $HITL_METRICS_AGENT → autodetect (~/.claude / ~/.codex)`)
 }
@@ -225,6 +237,26 @@ func runInstallAlias(args []string) {
 	fmt.Fprintln(os.Stderr, "warning: `hitl-metrics install` は廃止予定です。`hitl-metrics setup` を使ってください。")
 	if err := setup.Run(nil); err != nil {
 		fmt.Fprintf(os.Stderr, "install error: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+func runUpgrade(args []string) {
+	checkOnly := false
+	for _, a := range args {
+		switch a {
+		case "--check":
+			checkOnly = true
+		default:
+			fmt.Fprintf(os.Stderr, "upgrade: unknown flag %q\n", a)
+			os.Exit(1)
+		}
+	}
+	if err := upgrade.Run(upgrade.Options{
+		CurrentVersion: version,
+		CheckOnly:      checkOnly,
+	}); err != nil {
+		fmt.Fprintf(os.Stderr, "upgrade error: %v\n", err)
 		os.Exit(1)
 	}
 }
