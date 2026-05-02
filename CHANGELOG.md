@@ -7,6 +7,16 @@ hitl-metrics の変更履歴。新しいものが上。
 - Makefile に `build` / `install` / `uninstall` ターゲットを追加
   - `make install` で `$(PREFIX)/bin/hitl-metrics`（デフォルト `~/.local/bin`）にビルド配置
   - PATH 未含有時に警告
+- ダッシュボードを「状態評価」「改善のきっかけ」の 2 領域に再編
+  - 状態評価行: PR 非依存の期間集計指標のみ採用（活動量・スループット・コスト・期間集計効率・質の推移）。PR 単位効率指標は複雑度が平準化されないため除外
+  - 改善のきっかけ行: PR 単位の外れ値検出を集約し、PR スコアカードに `changes_requested` の色分け強調を追加（ソートで任意視点に切り替え可能）
+  - schema に週別集計 view (`pr_merged_at_approx`, `weekly_pr_metrics`, `weekly_session_metrics`) を追加
+  - `task_type` 列を全 table から削除（ADR-024）— branch 命名規約に依存し脆い指標。hitl-metrics は定量指標で状態評価・問題特定を行うツールであり、PR の定性評価は LLM に委ねる方針
+  - `pr_merged_at_approx` view を `ended_at` 欠損時に session timestamp で代替するよう変更 — hook 未実装・abort・強制終了でも拾える
+  - e2e fixture の timestamp をテスト実行時を基準にシフトするよう変更 — Grafana を直接開いても Last 30 days のデフォルト range で常にデータが描画される
+  - 活動量サマリーを 4 つの個別 stat panel に分割して横並び化 — 1 panel 内 cell の自動レイアウトでは horizontal を確実に維持できないため
+  - 週別 trend を単一指標パネルに分割（merged PR 数 / PR per 1M tokens / tokens per session / changes_requested 発生率）— 複合パネルは軸スケール差で読みづらかった
+  - PR スコアカードの `total_tokens` 背景色グラデーションを削除 — 列内相対値での塗り分けが「赤＝悪い」と誤読されるため。`changes_requested` の絶対 threshold 色分けは維持
 
 ## 2026-04-27
 
