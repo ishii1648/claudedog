@@ -19,7 +19,7 @@
       "title": "活動量サマリー",
       "description": "期間内の活動量・スループット指標。PR の複雑度に依存しない集計のみ表示する",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 24, "x": 0, "y": 1 },
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 1 },
       "datasource": { "type": "frser-sqlite-datasource", "uid": "hitl-metrics" },
       "targets": [
         {
@@ -62,9 +62,10 @@
           "values": false
         },
         "orientation": "horizontal",
-        "textMode": "auto",
-        "colorMode": "value",
-        "graphMode": "none"
+        "textMode": "value_and_name",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center"
       }
     },
     {
@@ -72,7 +73,7 @@
       "title": "週別 token 消費",
       "description": "週単位の総 tokens（コスト推移）",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 5 },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 7 },
       "datasource": { "type": "frser-sqlite-datasource", "uid": "hitl-metrics" },
       "targets": [
         {
@@ -103,7 +104,7 @@
       "title": "週別 セッション数 / merged PR 数",
       "description": "活動量とスループットの推移",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 5 },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 7 },
       "datasource": { "type": "frser-sqlite-datasource", "uid": "hitl-metrics" },
       "targets": [
         {
@@ -144,7 +145,7 @@
       "title": "週別 concurrent sessions",
       "description": "トップレベル Claude Code セッションの週別平均・最大同時実行数",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 5 },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 7 },
       "datasource": { "type": "frser-sqlite-datasource", "uid": "hitl-metrics" },
       "targets": [
         {
@@ -181,7 +182,7 @@
       "title": "週別 PR / 1M tokens",
       "description": "期間集計の効率指標。PR 単位ではなく週内で平均化されているため複雑度差は均される",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 13 },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 15 },
       "datasource": { "type": "frser-sqlite-datasource", "uid": "hitl-metrics" },
       "targets": [
         {
@@ -212,7 +213,7 @@
       "title": "週別 tokens / session・ask_user_question / session",
       "description": "期間集計のセッション効率と指示不足傾向の推移",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 13 },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 15 },
       "datasource": { "type": "frser-sqlite-datasource", "uid": "hitl-metrics" },
       "targets": [
         {
@@ -251,7 +252,7 @@
       "title": "週別 changes_requested 発生率 / merge までの avg session 数",
       "description": "リワーク傾向と PR 完了までに要したセッション数の推移",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 13 },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 15 },
       "datasource": { "type": "frser-sqlite-datasource", "uid": "hitl-metrics" },
       "targets": [
         {
@@ -296,7 +297,7 @@
       "id": 102,
       "title": "改善のきっかけ — PR 単位の外れ値検出",
       "type": "row",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 21 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 23 },
       "collapsed": false,
       "panels": []
     },
@@ -305,7 +306,7 @@
       "title": "PR 別 token スコアカード（merged のみ）",
       "description": "merged PR ごとの token 消費・効率・品質指標一覧。複雑度の異なる PR を比較するのではなく、外れ値を発見しドリルダウンする用途",
       "type": "table",
-      "gridPos": { "h": 16, "w": 16, "x": 0, "y": 22 },
+      "gridPos": { "h": 16, "w": 16, "x": 0, "y": 24 },
       "datasource": { "type": "frser-sqlite-datasource", "uid": "hitl-metrics" },
       "targets": [
         {
@@ -377,7 +378,7 @@
       "title": "PR 別 session_count 分布",
       "description": "多セッション PR の外れ値検出。脱線・やり直しの兆候。上位 10 件のみ",
       "type": "barchart",
-      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 22 },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 24 },
       "datasource": { "type": "frser-sqlite-datasource", "uid": "hitl-metrics" },
       "targets": [
         {
@@ -404,7 +405,7 @@
       "title": "PR 別 tokens / tool_use",
       "description": "1 tool_use あたりの token 消費が大きい PR。ファイル肥大・無駄な再読みの兆候。上位 10 件のみ",
       "type": "barchart",
-      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 30 },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 32 },
       "datasource": { "type": "frser-sqlite-datasource", "uid": "hitl-metrics" },
       "targets": [
         {
