@@ -361,7 +361,7 @@
       "datasource": { "type": "frser-sqlite-datasource", "uid": "hitl-metrics" },
       "targets": [
         {
-          "rawQueryText": "SELECT replace(replace(pr_url, 'https://github.com/', ''), '/pull/', '#') AS pr, session_count FROM pr_metrics ORDER BY session_count DESC, pr_url",
+          "rawQueryText": "SELECT '#' || substr(pr_url, instr(pr_url, '/pull/') + 6) AS pr, session_count FROM pr_metrics ORDER BY session_count DESC, pr_url",
           "refId": "A"
         }
       ],
@@ -388,7 +388,7 @@
       "datasource": { "type": "frser-sqlite-datasource", "uid": "hitl-metrics" },
       "targets": [
         {
-          "rawQueryText": "SELECT replace(replace(pr_url, 'https://github.com/', ''), '/pull/', '#') AS pr, tokens_per_tool_use FROM pr_metrics WHERE tokens_per_tool_use IS NOT NULL ORDER BY tokens_per_tool_use DESC, pr_url LIMIT 20",
+          "rawQueryText": "SELECT '#' || substr(pr_url, instr(pr_url, '/pull/') + 6) AS pr, tokens_per_tool_use FROM pr_metrics WHERE tokens_per_tool_use IS NOT NULL ORDER BY tokens_per_tool_use DESC, pr_url LIMIT 20",
           "refId": "A"
         }
       ],
