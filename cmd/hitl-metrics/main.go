@@ -8,7 +8,6 @@ import (
 	"github.com/ishii1648/hitl-metrics/internal/backfill"
 	"github.com/ishii1648/hitl-metrics/internal/doctor"
 	"github.com/ishii1648/hitl-metrics/internal/hook"
-	"github.com/ishii1648/hitl-metrics/internal/install"
 	"github.com/ishii1648/hitl-metrics/internal/sessionindex"
 	"github.com/ishii1648/hitl-metrics/internal/setup"
 	"github.com/ishii1648/hitl-metrics/internal/syncdb"
@@ -91,8 +90,17 @@ func extractAgentFlag(args []string) (string, []string) {
 	return name, out
 }
 
+// runUpdate dispatches `update` to every detected agent's session-index.
+// session_id is a UUID and the user shouldn't have to remember which agent
+// owns it — we apply the operation to each present index and let the
+// no-match branches return cleanly.
 func runUpdate(args []string) {
-	indexPath := sessionindex.IndexFile()
+	agentName, args := extractAgentFlag(args)
+	agents, err := agent.ResolveOrDetect(agentName)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "update: %v\n", err)
+		os.Exit(1)
+	}
 
 	if len(args) == 0 {
 		return
@@ -103,9 +111,11 @@ func runUpdate(args []string) {
 		if len(sessionIDs) == 0 {
 			return
 		}
-		if _, err := sessionindex.MarkChecked(indexPath, sessionIDs); err != nil {
-			fmt.Fprintf(os.Stderr, "mark-checked error: %v\n", err)
-			os.Exit(1)
+		for _, a := range agents {
+			if _, err := sessionindex.MarkChecked(a.SessionIndexPath(), sessionIDs); err != nil {
+				fmt.Fprintf(os.Stderr, "mark-checked[%s] error: %v\n", a.Name, err)
+				os.Exit(1)
+			}
 		}
 		return
 	}
@@ -115,9 +125,11 @@ func runUpdate(args []string) {
 			return
 		}
 		repo, branch, url := args[1], args[2], args[3]
-		if _, err := sessionindex.UpdateByBranch(indexPath, repo, branch, url); err != nil {
-			fmt.Fprintf(os.Stderr, "by-branch error: %v\n", err)
-			os.Exit(1)
+		for _, a := range agents {
+			if _, err := sessionindex.UpdateByBranch(a.SessionIndexPath(), repo, branch, url); err != nil {
+				fmt.Fprintf(os.Stderr, "by-branch[%s] error: %v\n", a.Name, err)
+				os.Exit(1)
+			}
 		}
 		return
 	}
@@ -127,9 +139,11 @@ func runUpdate(args []string) {
 	}
 	sessionID := args[0]
 	urls := args[1:]
-	if _, err := sessionindex.Update(indexPath, sessionID, urls); err != nil {
-		fmt.Fprintf(os.Stderr, "update error: %v\n", err)
-		os.Exit(1)
+	for _, a := range agents {
+		if _, err := sessionindex.Update(a.SessionIndexPath(), sessionID, urls); err != nil {
+			fmt.Fprintf(os.Stderr, "update[%s] error: %v\n", a.Name, err)
+			os.Exit(1)
+		}
 	}
 }
 
@@ -191,18 +205,25 @@ func runUninstallHooks() {
 
 // runInstallAlias preserves the legacy `hitl-metrics install [--uninstall-hooks]`
 // surface for users still on the old invocation. New flows MUST use the
-// dedicated subcommands.
+// dedicated `setup` / `uninstall-hooks` subcommands.
+//
+// We deliberately call setup.* directly (rather than the install package's
+// thin alias) so this file does not trip the staticcheck SA1019 rule.
+// The deprecation warning is emitted inline and stays close to the
+// dispatch logic.
 func runInstallAlias(args []string) {
 	for _, a := range args {
 		if a == "--uninstall-hooks" {
-			if err := install.Uninstall(); err != nil {
+			fmt.Fprintln(os.Stderr, "warning: `hitl-metrics install --uninstall-hooks` は廃止予定です。`hitl-metrics uninstall-hooks` を使ってください。")
+			if err := setup.Uninstall(); err != nil {
 				fmt.Fprintf(os.Stderr, "install --uninstall-hooks error: %v\n", err)
 				os.Exit(1)
 			}
 			return
 		}
 	}
-	if err := install.Run(); err != nil {
+	fmt.Fprintln(os.Stderr, "warning: `hitl-metrics install` は廃止予定です。`hitl-metrics setup` を使ってください。")
+	if err := setup.Run(nil); err != nil {
 		fmt.Fprintf(os.Stderr, "install error: %v\n", err)
 		os.Exit(1)
 	}
