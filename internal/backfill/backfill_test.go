@@ -1,8 +1,10 @@
 package backfill
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -173,6 +175,70 @@ func TestRunWithState_CursorBeyondLength(t *testing.T) {
 	if state.LastBackfillOffset != 1 {
 		t.Fatalf("expected offset 1 after reset, got %d", state.LastBackfillOffset)
 	}
+}
+
+// TestRunWithState_RetriesPendingBelowCursor verifies that entries below the
+// cursor that are still pending (pr_urls empty, !backfill_checked) get retried
+// on subsequent runs — these are sessions whose PR was created *after* the
+// previous Stop hook, and they must not be stranded by the cursor.
+func TestRunWithState_RetriesPendingBelowCursor(t *testing.T) {
+	dir := t.TempDir()
+	// Two entries: index 0 is pending (no URL, not yet checked), index 1
+	// is settled (has URL, checked). Cursor sits at 2 (past both).
+	indexPath := writeTestIndex(t, dir, []string{
+		`{"timestamp":"2026-03-01 10:00:00","session_id":"s1","cwd":"/nonexistent/path/abc","repo":"user/repo","branch":"feat-pending","pr_urls":[],"transcript":"","parent_session_id":"","backfill_checked":false}`,
+		`{"timestamp":"2026-03-01 11:00:00","session_id":"s2","cwd":"/tmp","repo":"user/repo","branch":"feat","pr_urls":["https://github.com/user/repo/pull/2"],"transcript":"","parent_session_id":"","backfill_checked":true}`,
+	})
+	statePath := filepath.Join(dir, "state.json")
+	SaveState(statePath, State{LastBackfillOffset: 2, LastMetaCheck: time.Now()})
+
+	if err := RunWithState(indexPath, statePath, false); err != nil {
+		t.Fatal(err)
+	}
+
+	// s1's cwd is bogus → fetchPR returns markChecked=true.
+	// Verify s1 was actually picked up (backfill_checked flipped to true).
+	_, sessions, err := readBackForTest(indexPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var s1 *testSession
+	for i := range sessions {
+		if sessions[i].SessionID == "s1" {
+			s1 = &sessions[i]
+			break
+		}
+	}
+	if s1 == nil {
+		t.Fatal("session s1 not found")
+	}
+	if !s1.BackfillChecked {
+		t.Fatalf("expected s1.backfill_checked=true after retry, got false (cursor stranded the pending entry)")
+	}
+}
+
+type testSession struct {
+	SessionID       string `json:"session_id"`
+	BackfillChecked bool   `json:"backfill_checked"`
+}
+
+func readBackForTest(path string) ([]struct{}, []testSession, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, nil, err
+	}
+	var out []testSession
+	for _, line := range strings.Split(string(data), "\n") {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+		var s testSession
+		if err := json.Unmarshal([]byte(line), &s); err != nil {
+			continue
+		}
+		out = append(out, s)
+	}
+	return nil, out, nil
 }
 
 func TestParsePRList_ChangesRequested(t *testing.T) {

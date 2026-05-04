@@ -102,13 +102,21 @@ func runForAgent(a *agent.Agent, indexPath, statePath string, recheck bool) erro
 		return fmt.Errorf("load state: %w", err)
 	}
 
-	// Phase 1: Fetch PR URLs for sessions without them
-	// Use cursor to skip already-processed entries
+	// Phase 1: Fetch PR URLs for sessions without them.
+	// Cursor skips bulk-resolved entries, but cursor-below entries that are
+	// still pending (pr_urls 空 かつ !backfill_checked) must be retried each
+	// run — otherwise sessions whose PR was created after the previous Stop
+	// hook would never get their URL filled in.
 	offset := state.LastBackfillOffset
 	if offset > len(sessions) || recheck {
 		offset = 0
 	}
-	target := sessions[offset:]
+	target := append([]sessionindex.Session(nil), sessions[offset:]...)
+	for _, s := range sessions[:offset] {
+		if len(s.PRURLs) == 0 && !s.BackfillChecked {
+			target = append(target, s)
+		}
+	}
 
 	if err := runURLBackfill(indexPath, target, recheck); err != nil {
 		return err
