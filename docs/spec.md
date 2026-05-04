@@ -202,13 +202,13 @@ PR 単位の集約ビュー。次のフィルタ条件を適用する。
 | `is_ghost = 0` | ゴーストセッションを除外 |
 | `repo NOT IN ('ishii1648/dotfiles')` | dotfiles リポジトリを除外 |
 
-集約カラム: `pr_url`, `coding_agent`, `model`, `session_count`, `tool_use_total`, `mid_session_msgs`, `ask_user_question`, `input_tokens`, `output_tokens`, `cache_write_tokens`, `cache_read_tokens`, `reasoning_tokens`, `review_comments`, `changes_requested`, `total_tokens`, `tokens_per_session`, `tokens_per_tool_use`, `pr_per_million_tokens`
+集約カラム: `pr_url`, `coding_agent`, `model`, `session_count`, `tool_use_total`, `mid_session_msgs`, `ask_user_question`, `input_tokens`, `output_tokens`, `cache_write_tokens`, `cache_read_tokens`, `reasoning_tokens`, `review_comments`, `changes_requested`, `total_tokens`, `fresh_tokens`, `tokens_per_session`, `tokens_per_tool_use`, `pr_per_million_tokens`
 
 `task_type` は集約軸から外れている（ADR-024 で「定量指標は task_type を集計軸に使わない」方針が採用されたため）。`sessions.task_type` カラム自体は後方互換と任意フィルタの余地として残す。
 
 GROUP BY は (`pr_url`, `coding_agent`)。同一 PR が複数 agent から触られた場合は agent ごとに別行になる（実運用上ほぼ発生しないが意味的に分離する）。
 
-`total_tokens` は input / output / cache write / cache read / reasoning token の合計。`pr_per_million_tokens` は 100 万 token あたりに完了した PR 数。
+`total_tokens` は input / output / cache write / cache read / reasoning token の合計。`fresh_tokens` は `cache_read_tokens` を除いた合計（input / output / cache write / reasoning）。長時間セッションで `cache_read_tokens` が支配的になり「重さ」の体感と乖離する場面の代替指標。`pr_per_million_tokens` は 100 万 token あたりに完了した PR 数。
 
 ### `session_concurrency_daily` / `session_concurrency_weekly` VIEW
 

@@ -328,7 +328,7 @@
       "datasource": { "type": "frser-sqlite-datasource", "uid": "hitl-metrics" },
       "targets": [
         {
-          "rawQueryText": "SELECT replace(replace(pr_url, 'https://github.com/', ''), '/pull/', '#') AS pr, coding_agent, model, total_tokens, tokens_per_tool_use, pr_per_million_tokens, session_count, mid_session_msgs, ask_user_question, reasoning_tokens, changes_requested, pr_url FROM pr_metrics WHERE total_tokens > 0 AND coding_agent IN (${coding_agent:singlequote}) ORDER BY total_tokens DESC",
+          "rawQueryText": "SELECT replace(replace(pr_url, 'https://github.com/', ''), '/pull/', '#') AS pr, coding_agent, model, total_tokens, fresh_tokens, tokens_per_tool_use, session_count, mid_session_msgs, ask_user_question, pr_url FROM pr_metrics WHERE total_tokens > 0 AND coding_agent IN (${coding_agent:singlequote}) ORDER BY fresh_tokens DESC",
           "refId": "A"
         }
       ],
@@ -349,31 +349,11 @@
             ]
           },
           {
-            "matcher": { "id": "byName", "options": "total_tokens" },
+            "matcher": { "id": "byRegexp", "options": "/^(total_tokens|fresh_tokens)$/" },
             "properties": [
               { "id": "unit", "value": "short" },
               { "id": "decimals", "value": 1 },
               { "id": "custom.width", "value": 120 }
-            ]
-          },
-          {
-            "matcher": { "id": "byName", "options": "changes_requested" },
-            "properties": [
-              {
-                "id": "custom.cellOptions",
-                "value": { "type": "color-background", "mode": "basic" }
-              },
-              {
-                "id": "thresholds",
-                "value": {
-                  "mode": "absolute",
-                  "steps": [
-                    { "color": "transparent", "value": null },
-                    { "color": "orange", "value": 1 },
-                    { "color": "red", "value": 3 }
-                  ]
-                }
-              }
             ]
           },
           {
@@ -388,7 +368,7 @@
       "options": {
         "showHeader": true,
         "cellHeight": "lg",
-        "sortBy": [{ "displayName": "total_tokens", "desc": true }]
+        "sortBy": [{ "displayName": "fresh_tokens", "desc": true }]
       }
     },
     {
