@@ -24,6 +24,7 @@ type group struct {
 type result struct {
 	group            group
 	url              string
+	title            string
 	markChecked      bool
 	isMerged         bool
 	comments         int
@@ -33,6 +34,7 @@ type result struct {
 // prJSON represents a PR entry from gh pr list --json output.
 type prJSON struct {
 	URL      string        `json:"url"`
+	Title    string        `json:"title"`
 	State    string        `json:"state"`
 	Comments []interface{} `json:"comments"`
 	Reviews  []reviewJSON  `json:"reviews"`
@@ -226,7 +228,7 @@ func runURLBackfill(indexPath string, sessions []sessionindex.Session, recheck b
 				}
 			}
 			// Also set merge info right away
-			if _, err := sessionindex.UpdatePRMeta(indexPath, r.url, r.isMerged, r.comments, r.changesRequested); err != nil {
+			if _, err := sessionindex.UpdatePRMeta(indexPath, r.url, r.isMerged, r.comments, r.changesRequested, r.title); err != nil {
 				fmt.Fprintf(os.Stderr, "backfill: update-meta %s: %v\n", r.url, err)
 			}
 		} else if r.markChecked {
@@ -281,6 +283,7 @@ func runMetaBackfill(indexPath string, sessions []sessionindex.Session) error {
 
 	type metaResult struct {
 		url              string
+		title            string
 		isMerged         bool
 		comments         int
 		changesRequested int
@@ -298,10 +301,17 @@ func runMetaBackfill(indexPath string, sessions []sessionindex.Session) error {
 			sem <- struct{}{}
 			defer func() { <-sem }()
 
+			// `gh pr view <full-url>` は cwd の git remote に依存しないので、
+			// 元の cwd が消えていても HOME にフォールバックしてリモート解決する。
+			// リネームや worktree 削除で cwd が消えた古いセッションでも meta を更新できる。
 			cwd := t.cwd
 			if cwd == "" || !isDir(cwd) {
-				results <- metaResult{url: t.url}
-				return
+				home, err := os.UserHomeDir()
+				if err != nil || !isDir(home) {
+					results <- metaResult{url: t.url}
+					return
+				}
+				cwd = home
 			}
 
 			pr, err := fetchPRByURL(t.url, cwd)
@@ -311,6 +321,7 @@ func runMetaBackfill(indexPath string, sessions []sessionindex.Session) error {
 			}
 			results <- metaResult{
 				url:              t.url,
+				title:            pr.Title,
 				isMerged:         pr.State == "MERGED",
 				comments:         len(pr.Comments),
 				changesRequested: countChangesRequested(pr.Reviews),
@@ -327,7 +338,7 @@ func runMetaBackfill(indexPath string, sessions []sessionindex.Session) error {
 	updated := 0
 	for r := range results {
 		if r.ok {
-			if _, err := sessionindex.UpdatePRMeta(indexPath, r.url, r.isMerged, r.comments, r.changesRequested); err != nil {
+			if _, err := sessionindex.UpdatePRMeta(indexPath, r.url, r.isMerged, r.comments, r.changesRequested, r.title); err != nil {
 				fmt.Fprintf(os.Stderr, "backfill-meta: update %s: %v\n", r.url, err)
 			}
 			updated++
@@ -350,7 +361,7 @@ func fetchPR(g group) result {
 		"--head", g.branch,
 		"--author", "@me",
 		"--state", "all",
-		"--json", "url,state,comments,reviews",
+		"--json", "url,title,state,comments,reviews",
 		"--limit", "1",
 	)
 	cmd.Dir = cwd
@@ -375,6 +386,7 @@ func fetchPR(g group) result {
 		return result{
 			group:            g,
 			url:              pr.URL,
+			title:            pr.Title,
 			isMerged:         pr.State == "MERGED",
 			comments:         len(pr.Comments),
 			changesRequested: countChangesRequested(pr.Reviews),
@@ -388,7 +400,7 @@ func fetchPR(g group) result {
 // fetchPRByURL fetches PR metadata for an existing PR URL using gh pr view.
 func fetchPRByURL(prURL, cwd string) (*prJSON, error) {
 	cmd := exec.Command("gh", "pr", "view", prURL,
-		"--json", "url,state,comments,reviews",
+		"--json", "url,title,state,comments,reviews",
 	)
 	cmd.Dir = cwd
 

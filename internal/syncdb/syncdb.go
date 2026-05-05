@@ -105,8 +105,8 @@ func runWithSources(sources []agentSource, dbPath string) error {
 	defer tx.Rollback()
 
 	sessionStmt, err := tx.Prepare(`INSERT OR REPLACE INTO sessions
-		(session_id, coding_agent, agent_version, timestamp, cwd, repo, branch, pr_url, transcript, parent_session_id, ended_at, end_reason, is_subagent, backfill_checked, is_merged, task_type, review_comments, changes_requested)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+		(session_id, coding_agent, agent_version, timestamp, cwd, repo, branch, pr_url, pr_title, transcript, parent_session_id, ended_at, end_reason, is_subagent, backfill_checked, is_merged, task_type, review_comments, changes_requested)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
 	if err != nil {
 		return err
 	}
@@ -163,9 +163,14 @@ func runWithSources(sources []agentSource, dbPath string) error {
 			}
 			taskType := ExtractTaskType(s.Branch)
 
+			prTitle := s.PRTitle
+			if prURL == "" {
+				prTitle = ""
+			}
+
 			if _, err := sessionStmt.Exec(
 				s.SessionID, codingAgent, s.AgentVersion, s.Timestamp, s.CWD, s.Repo, s.Branch,
-				prURL, s.Transcript, s.ParentSessionID, s.EndedAt, s.EndReason,
+				prURL, prTitle, s.Transcript, s.ParentSessionID, s.EndedAt, s.EndReason,
 				isSubagent, backfillChecked, isMerged, taskType, s.ReviewComments, s.ChangesRequested,
 			); err != nil {
 				return fmt.Errorf("insert session %s/%s: %w", codingAgent, s.SessionID, err)
