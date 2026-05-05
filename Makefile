@@ -1,4 +1,4 @@
-.PHONY: build install uninstall grafana-fixtures grafana-up grafana-up-e2e grafana-down grafana-screenshot lint-dashboard worktree-create worktree-list worktree-remove
+.PHONY: build install uninstall grafana-fixtures grafana-up grafana-up-e2e grafana-down grafana-screenshot lint-dashboard
 
 PREFIX ?= $(HOME)/.local
 BIN_DIR := $(PREFIX)/bin
@@ -6,6 +6,14 @@ BIN_NAME := hitl-metrics
 
 # 実データ表示用 DB パス（grafana-up が参照）。上書き可。
 HITL_METRICS_DB ?= $(HOME)/.claude/hitl-metrics.db
+
+# grafana-up（実データ）と grafana-up-e2e（fixture）を並行起動できるよう、
+# compose project とポートを分離する。互いに独立したスタックとして扱われ、
+# 片方を立ち上げてももう片方のコンテナを巻き込まない。
+GRAFANA_PORT         ?= 13000
+GRAFANA_E2E_PORT     ?= 13001
+COMPOSE_PROJECT_REAL ?= agent-telemetry-real
+COMPOSE_PROJECT_E2E  ?= agent-telemetry-e2e
 
 build:
 	CGO_ENABLED=0 go build -o bin/$(BIN_NAME) ./cmd/hitl-metrics/
@@ -29,11 +37,12 @@ grafana-up:
 		echo "Run 'hitl-metrics sync-db' first, or override: make grafana-up HITL_METRICS_DB=/path/to/db"; \
 		exit 1; \
 	fi
-	HITL_METRICS_DB=$(HITL_METRICS_DB) docker compose up -d
+	HITL_METRICS_DB=$(HITL_METRICS_DB) GRAFANA_PORT=$(GRAFANA_PORT) \
+	    docker compose -p $(COMPOSE_PROJECT_REAL) up -d
 	@echo "Waiting for Grafana to be ready..."
 	@for i in $$(seq 1 60); do \
-		if curl -sf http://localhost:$${GRAFANA_PORT:-13000}/api/health > /dev/null 2>&1; then \
-			echo "Grafana is ready at http://localhost:$${GRAFANA_PORT:-13000}"; \
+		if curl -sf http://localhost:$(GRAFANA_PORT)/api/health > /dev/null 2>&1; then \
+			echo "Grafana is ready at http://localhost:$(GRAFANA_PORT)"; \
 			echo "Showing data from: $(HITL_METRICS_DB)"; \
 			exit 0; \
 		fi; \
@@ -42,11 +51,12 @@ grafana-up:
 	echo "Grafana failed to start within 60s"; exit 1
 
 grafana-up-e2e: grafana-fixtures
-	HITL_METRICS_DB=$(CURDIR)/e2e/testdata/hitl-metrics.db docker compose up -d
+	HITL_METRICS_DB=$(CURDIR)/e2e/testdata/hitl-metrics.db GRAFANA_PORT=$(GRAFANA_E2E_PORT) \
+	    docker compose -p $(COMPOSE_PROJECT_E2E) up -d
 	@echo "Waiting for Grafana to be ready..."
 	@for i in $$(seq 1 60); do \
-		if curl -sf http://localhost:$${GRAFANA_PORT:-13000}/api/health > /dev/null 2>&1; then \
-			echo "Grafana is ready at http://localhost:$${GRAFANA_PORT:-13000} (e2e fixtures)"; \
+		if curl -sf http://localhost:$(GRAFANA_E2E_PORT)/api/health > /dev/null 2>&1; then \
+			echo "Grafana is ready at http://localhost:$(GRAFANA_E2E_PORT) (e2e fixtures)"; \
 			exit 0; \
 		fi; \
 		sleep 1; \
@@ -54,34 +64,11 @@ grafana-up-e2e: grafana-fixtures
 	echo "Grafana failed to start within 60s"; exit 1
 
 grafana-down:
-	docker compose down
+	-docker compose -p $(COMPOSE_PROJECT_REAL) down
+	-docker compose -p $(COMPOSE_PROJECT_E2E) down
 
 grafana-screenshot: grafana-up-e2e
-	bash e2e/screenshot.sh .outputs/grafana-screenshots
+	GRAFANA_PORT=$(GRAFANA_E2E_PORT) bash e2e/screenshot.sh .outputs/grafana-screenshots
 
 lint-dashboard:
 	go run github.com/grafana/dashboard-linter@latest lint --strict --config grafana/dashboards/.lint grafana/dashboards/hitl-metrics.json
-
-# Worktree management (usage: make worktree-create BRANCH=feat/atomic-write)
-# Path convention: <repo_root>@<branch_dir_name> (gw_add と同じ @ 区切り)
-MAIN_WORKTREE := $(shell git worktree list --porcelain | head -1 | sed 's/worktree //')
-WT_DIR_NAME = $(subst /,-,$(BRANCH))
-WT_PATH = $(MAIN_WORKTREE)@$(WT_DIR_NAME)
-
-worktree-create:
-	@if [ -z "$(BRANCH)" ]; then echo "Usage: make worktree-create BRANCH=feat/atomic-write"; exit 1; fi
-	git fetch origin
-	git worktree add "$(WT_PATH)" -b "$(BRANCH)" origin/HEAD
-	@if [ -f .claude/settings.local.json ]; then \
-		mkdir -p "$(WT_PATH)/.claude"; \
-		cp .claude/settings.local.json "$(WT_PATH)/.claude/settings.local.json"; \
-		echo "Copied .claude/settings.local.json"; \
-	fi
-	@echo "Worktree created: $(WT_PATH) (branch: $(BRANCH))"
-
-worktree-list:
-	git worktree list
-
-worktree-remove:
-	@if [ -z "$(BRANCH)" ]; then echo "Usage: make worktree-remove BRANCH=feat/atomic-write"; exit 1; fi
-	git worktree remove "$(WT_PATH)"
