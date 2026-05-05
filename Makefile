@@ -10,8 +10,9 @@ HITL_METRICS_DB ?= $(HOME)/.claude/hitl-metrics.db
 # grafana-up（実データ）と grafana-up-e2e（fixture）を並行起動できるよう、
 # compose project とポートを分離する。互いに独立したスタックとして扱われ、
 # 片方を立ち上げてももう片方のコンテナを巻き込まない。
-GRAFANA_PORT         ?= 13000
-GRAFANA_E2E_PORT     ?= 13001
+# 既定ポートは ssh トンネル等でよく使われる 13000 / 13001 を避けて 13010+ に置く。
+GRAFANA_PORT         ?= 13010
+GRAFANA_E2E_PORT     ?= 13011
 COMPOSE_PROJECT_REAL ?= agent-telemetry-real
 COMPOSE_PROJECT_E2E  ?= agent-telemetry-e2e
 
