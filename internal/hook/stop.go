@@ -5,8 +5,8 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/ishii1648/hitl-metrics/internal/agent"
-	"github.com/ishii1648/hitl-metrics/internal/sessionindex"
+	"github.com/ishii1648/agent-telemetry/internal/agent"
+	"github.com/ishii1648/agent-telemetry/internal/sessionindex"
 )
 
 // RunStop handles the Stop hook event for the given agent.
@@ -15,8 +15,8 @@ import (
 //   - Codex: overwrite ended_at on every fire (Codex has no SessionEnd, so
 //     the last Stop fire is the de-facto SessionEnd). end_reason is fixed
 //     to "stop".
-//   - Both agents: shell out to `hitl-metrics backfill` then
-//     `hitl-metrics sync-db` so the SQLite DB is fresh by the time the
+//   - Both agents: shell out to `agent-telemetry backfill` then
+//     `agent-telemetry sync-db` so the SQLite DB is fresh by the time the
 //     user looks at the dashboard. We exec the binary (instead of calling
 //     the packages directly) to keep the sqlite dependency out of the
 //     hook hot path and to match the original shell behaviour.
@@ -35,10 +35,10 @@ func RunStop(input *HookInput, a *agent.Agent) error {
 		}
 	}
 
-	if out, err := exec.Command("hitl-metrics", "backfill", "--agent", a.Name).CombinedOutput(); err != nil {
+	if out, err := exec.Command("agent-telemetry", "backfill", "--agent", a.Name).CombinedOutput(); err != nil {
 		return fmt.Errorf("backfill: %w\n%s", err, out)
 	}
-	if out, err := exec.Command("hitl-metrics", "sync-db").CombinedOutput(); err != nil {
+	if out, err := exec.Command("agent-telemetry", "sync-db").CombinedOutput(); err != nil {
 		return fmt.Errorf("sync-db: %w\n%s", err, out)
 	}
 	return nil

@@ -1,4 +1,4 @@
-module github.com/ishii1648/hitl-metrics
+module github.com/ishii1648/agent-telemetry
 
 go 1.22.2
 

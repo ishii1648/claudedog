@@ -1,8 +1,8 @@
 version: 2
 
 builds:
-  - main: ./cmd/hitl-metrics/
-    binary: hitl-metrics
+  - main: ./cmd/agent-telemetry/
+    binary: agent-telemetry
     env:
       - CGO_ENABLED=0
     ldflags:

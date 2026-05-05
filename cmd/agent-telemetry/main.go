@@ -5,14 +5,14 @@ import (
 	"io"
 	"os"
 
-	"github.com/ishii1648/hitl-metrics/internal/agent"
-	"github.com/ishii1648/hitl-metrics/internal/backfill"
-	"github.com/ishii1648/hitl-metrics/internal/doctor"
-	"github.com/ishii1648/hitl-metrics/internal/hook"
-	"github.com/ishii1648/hitl-metrics/internal/sessionindex"
-	"github.com/ishii1648/hitl-metrics/internal/setup"
-	"github.com/ishii1648/hitl-metrics/internal/syncdb"
-	"github.com/ishii1648/hitl-metrics/internal/upgrade"
+	"github.com/ishii1648/agent-telemetry/internal/agent"
+	"github.com/ishii1648/agent-telemetry/internal/backfill"
+	"github.com/ishii1648/agent-telemetry/internal/doctor"
+	"github.com/ishii1648/agent-telemetry/internal/hook"
+	"github.com/ishii1648/agent-telemetry/internal/sessionindex"
+	"github.com/ishii1648/agent-telemetry/internal/setup"
+	"github.com/ishii1648/agent-telemetry/internal/syncdb"
+	"github.com/ishii1648/agent-telemetry/internal/upgrade"
 )
 
 // version is overwritten at build time via -ldflags "-X main.version=<tag>".
@@ -45,7 +45,7 @@ func main() {
 	case "upgrade":
 		runUpgrade(os.Args[2:])
 	case "version", "--version", "-v":
-		fmt.Printf("hitl-metrics %s\n", version)
+		fmt.Printf("agent-telemetry %s\n", version)
 	case "help", "--help", "-h":
 		printUsage(os.Stdout)
 	default:
@@ -56,7 +56,7 @@ func main() {
 }
 
 func printUsage(w io.Writer) {
-	fmt.Fprintln(w, `Usage: hitl-metrics <command> [args...]
+	fmt.Fprintln(w, `Usage: agent-telemetry <command> [args...]
 
 Commands:
   setup [--agent <claude|codex>]         セットアップ案内を表示（hook 登録は dotfiles または手動）
@@ -80,7 +80,7 @@ Commands:
   version                                version を表示
   help                                   このヘルプを表示
 
-Agent precedence: --agent → $HITL_METRICS_AGENT → autodetect (~/.claude / ~/.codex)`)
+Agent precedence: --agent → $AGENT_TELEMETRY_AGENT → autodetect (~/.claude / ~/.codex)`)
 }
 
 // extractAgentFlag pulls "--agent <name>" out of args, returning the name
@@ -215,7 +215,7 @@ func runUninstallHooks() {
 	}
 }
 
-// runInstallAlias preserves the legacy `hitl-metrics install [--uninstall-hooks]`
+// runInstallAlias preserves the legacy `agent-telemetry install [--uninstall-hooks]`
 // surface for users still on the old invocation. New flows MUST use the
 // dedicated `setup` / `uninstall-hooks` subcommands.
 //
@@ -226,7 +226,7 @@ func runUninstallHooks() {
 func runInstallAlias(args []string) {
 	for _, a := range args {
 		if a == "--uninstall-hooks" {
-			fmt.Fprintln(os.Stderr, "warning: `hitl-metrics install --uninstall-hooks` は廃止予定です。`hitl-metrics uninstall-hooks` を使ってください。")
+			fmt.Fprintln(os.Stderr, "warning: `agent-telemetry install --uninstall-hooks` は廃止予定です。`agent-telemetry uninstall-hooks` を使ってください。")
 			if err := setup.Uninstall(); err != nil {
 				fmt.Fprintf(os.Stderr, "install --uninstall-hooks error: %v\n", err)
 				os.Exit(1)
@@ -234,7 +234,7 @@ func runInstallAlias(args []string) {
 			return
 		}
 	}
-	fmt.Fprintln(os.Stderr, "warning: `hitl-metrics install` は廃止予定です。`hitl-metrics setup` を使ってください。")
+	fmt.Fprintln(os.Stderr, "warning: `agent-telemetry install` は廃止予定です。`agent-telemetry setup` を使ってください。")
 	if err := setup.Run(nil); err != nil {
 		fmt.Fprintf(os.Stderr, "install error: %v\n", err)
 		os.Exit(1)
@@ -274,7 +274,7 @@ func runDoctor() {
 
 func runHook(args []string) {
 	if len(args) == 0 {
-		fmt.Fprintln(os.Stderr, "usage: hitl-metrics hook <event-name> [--agent <claude|codex>]")
+		fmt.Fprintln(os.Stderr, "usage: agent-telemetry hook <event-name> [--agent <claude|codex>]")
 		os.Exit(1)
 	}
 

@@ -10,9 +10,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ishii1648/hitl-metrics/internal/agent"
-	"github.com/ishii1648/hitl-metrics/internal/sessionindex"
-	"github.com/ishii1648/hitl-metrics/internal/transcript"
+	"github.com/ishii1648/agent-telemetry/internal/agent"
+	"github.com/ishii1648/agent-telemetry/internal/sessionindex"
+	"github.com/ishii1648/agent-telemetry/internal/transcript"
 )
 
 type group struct {

@@ -1,5 +1,5 @@
 // Package doctor inspects the local environment and reports whether
-// hitl-metrics is set up correctly. It NEVER mutates settings — diagnosis only.
+// agent-telemetry is set up correctly. It NEVER mutates settings — diagnosis only.
 package doctor
 
 import (
@@ -10,8 +10,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/ishii1648/hitl-metrics/internal/agent"
-	"github.com/ishii1648/hitl-metrics/internal/setup"
+	"github.com/ishii1648/agent-telemetry/internal/agent"
+	"github.com/ishii1648/agent-telemetry/internal/setup"
 )
 
 // Run executes all checks against the real filesystem and writes a report
@@ -64,7 +64,7 @@ func defaultEnv() Env {
 	}
 	return Env{
 		LookPath:   exec.LookPath,
-		BinaryName: "hitl-metrics",
+		BinaryName: "agent-telemetry",
 		Agents:     agents,
 	}
 }
@@ -191,11 +191,18 @@ func loadJSONHooks(path string) map[string][]string {
 }
 
 // isRegistered reports whether any command string under the event
-// references the given hitl-metrics subcommand.
+// references the given agent-telemetry subcommand.
+//
+// Matches both the new "agent-telemetry" and the legacy "hitl-metrics"
+// binary names so doctor still detects unmigrated environments after
+// the rename. Phase 5 will surface the legacy match as a warning.
 func isRegistered(commands []string, subcommand string) bool {
 	needle := "hook " + subcommand
 	for _, cmd := range commands {
-		if strings.Contains(cmd, "hitl-metrics") && strings.Contains(cmd, needle) {
+		if !strings.Contains(cmd, needle) {
+			continue
+		}
+		if strings.Contains(cmd, "agent-telemetry") || strings.Contains(cmd, "hitl-metrics") {
 			return true
 		}
 	}

@@ -10,17 +10,17 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/ishii1648/hitl-metrics/internal/agent"
+	"github.com/ishii1648/agent-telemetry/internal/agent"
 )
 
-// HookSpec describes one hitl-metrics hook entry.
+// HookSpec describes one agent-telemetry hook entry.
 //
 // CodingAgent identifies which agent the entry belongs to so doctor /
 // uninstall can scope their action correctly.
 type HookSpec struct {
 	CodingAgent string // "claude" or "codex"
 	Event       string // hook event name as written in settings (e.g. "SessionStart")
-	Subcommand  string // hitl-metrics hook subcommand
+	Subcommand  string // agent-telemetry hook subcommand
 	Optional    bool   // true → doctor flags as info, not failure
 }
 
@@ -106,21 +106,21 @@ func printClaude(w io.Writer) {
 	fmt.Fprintln(w, "# Claude Code (~/.claude/settings.json)")
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "  hook 登録は dotfiles または手動で行ってください。")
-	fmt.Fprintln(w, "  検証: hitl-metrics doctor")
-	fmt.Fprintln(w, "  過去の自動登録を削除: hitl-metrics uninstall-hooks")
+	fmt.Fprintln(w, "  検証: agent-telemetry doctor")
+	fmt.Fprintln(w, "  過去の自動登録を削除: agent-telemetry uninstall-hooks")
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "  例:")
 	fmt.Fprintln(w, "  {")
 	fmt.Fprintln(w, "    \"hooks\": {")
 	fmt.Fprintln(w, "      \"SessionStart\": [")
-	fmt.Fprintln(w, "        {\"matcher\": \"\", \"hooks\": [{\"type\": \"command\", \"command\": \"hitl-metrics hook session-start --agent claude\"}]},")
-	fmt.Fprintln(w, "        {\"matcher\": \"\", \"hooks\": [{\"type\": \"command\", \"command\": \"hitl-metrics hook todo-cleanup\"}]}")
+	fmt.Fprintln(w, "        {\"matcher\": \"\", \"hooks\": [{\"type\": \"command\", \"command\": \"agent-telemetry hook session-start --agent claude\"}]},")
+	fmt.Fprintln(w, "        {\"matcher\": \"\", \"hooks\": [{\"type\": \"command\", \"command\": \"agent-telemetry hook todo-cleanup\"}]}")
 	fmt.Fprintln(w, "      ],")
 	fmt.Fprintln(w, "      \"SessionEnd\": [")
-	fmt.Fprintln(w, "        {\"matcher\": \"\", \"hooks\": [{\"type\": \"command\", \"command\": \"hitl-metrics hook session-end --agent claude\", \"timeout\": 10}]}")
+	fmt.Fprintln(w, "        {\"matcher\": \"\", \"hooks\": [{\"type\": \"command\", \"command\": \"agent-telemetry hook session-end --agent claude\", \"timeout\": 10}]}")
 	fmt.Fprintln(w, "      ],")
 	fmt.Fprintln(w, "      \"Stop\": [")
-	fmt.Fprintln(w, "        {\"matcher\": \"\", \"hooks\": [{\"type\": \"command\", \"command\": \"hitl-metrics hook stop --agent claude\"}]}")
+	fmt.Fprintln(w, "        {\"matcher\": \"\", \"hooks\": [{\"type\": \"command\", \"command\": \"agent-telemetry hook stop --agent claude\"}]}")
 	fmt.Fprintln(w, "      ]")
 	fmt.Fprintln(w, "    }")
 	fmt.Fprintln(w, "  }")
@@ -134,13 +134,13 @@ func printCodex(w io.Writer) {
 	fmt.Fprintln(w, "  {")
 	fmt.Fprintln(w, "    \"hooks\": {")
 	fmt.Fprintln(w, "      \"SessionStart\": [")
-	fmt.Fprintln(w, "        {\"hooks\": [{\"type\": \"command\", \"command\": \"hitl-metrics hook session-start --agent codex\"}]}")
+	fmt.Fprintln(w, "        {\"hooks\": [{\"type\": \"command\", \"command\": \"agent-telemetry hook session-start --agent codex\"}]}")
 	fmt.Fprintln(w, "      ],")
 	fmt.Fprintln(w, "      \"Stop\": [")
-	fmt.Fprintln(w, "        {\"hooks\": [{\"type\": \"command\", \"command\": \"hitl-metrics hook stop --agent codex\"}]}")
+	fmt.Fprintln(w, "        {\"hooks\": [{\"type\": \"command\", \"command\": \"agent-telemetry hook stop --agent codex\"}]}")
 	fmt.Fprintln(w, "      ],")
 	fmt.Fprintln(w, "      \"PostToolUse\": [")
-	fmt.Fprintln(w, "        {\"hooks\": [{\"type\": \"command\", \"command\": \"hitl-metrics hook post-tool-use --agent codex\"}]}")
+	fmt.Fprintln(w, "        {\"hooks\": [{\"type\": \"command\", \"command\": \"agent-telemetry hook post-tool-use --agent codex\"}]}")
 	fmt.Fprintln(w, "      ]")
 	fmt.Fprintln(w, "    }")
 	fmt.Fprintln(w, "  }")
