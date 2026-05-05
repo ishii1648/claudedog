@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ishii1648/hitl-metrics/internal/agent"
+	"github.com/ishii1648/agent-telemetry/internal/agent"
 )
 
 // fakeLoader returns a SettingsLoader that yields the given commands per
@@ -21,13 +21,13 @@ func fakeLoader(byAgent map[string]map[string][]string) func(*agent.Agent) map[s
 
 func envWith(t *testing.T, agents []*agent.Agent, lookOK bool, settings map[string]map[string][]string) Env {
 	t.Helper()
-	look := func(string) (string, error) { return "/usr/local/bin/hitl-metrics", nil }
+	look := func(string) (string, error) { return "/usr/local/bin/agent-telemetry", nil }
 	if !lookOK {
 		look = func(string) (string, error) { return "", errors.New("not found") }
 	}
 	return Env{
 		LookPath:       look,
-		BinaryName:     "hitl-metrics",
+		BinaryName:     "agent-telemetry",
 		Agents:         agents,
 		SettingsLoader: fakeLoader(settings),
 	}
@@ -39,9 +39,9 @@ func TestRun_ClaudeAllChecksPass(t *testing.T) {
 
 	env := envWith(t, []*agent.Agent{a}, true, map[string]map[string][]string{
 		agent.NameClaude: {
-			"SessionStart": {"hitl-metrics hook session-start", "hitl-metrics hook todo-cleanup"},
-			"SessionEnd":   {"hitl-metrics hook session-end"},
-			"Stop":         {"hitl-metrics hook stop"},
+			"SessionStart": {"agent-telemetry hook session-start", "agent-telemetry hook todo-cleanup"},
+			"SessionEnd":   {"agent-telemetry hook session-end"},
+			"Stop":         {"agent-telemetry hook stop"},
 		},
 	})
 
@@ -55,7 +55,7 @@ func TestRun_ClaudeAllChecksPass(t *testing.T) {
 	}
 	out := buf.String()
 	for _, want := range []string{
-		"binary at /usr/local/bin/hitl-metrics",
+		"binary at /usr/local/bin/agent-telemetry",
 		"[claude] data dir at " + dir,
 		"[claude] hook registration:",
 		"SessionStart: session-start ✓",
@@ -73,8 +73,8 @@ func TestRun_CodexOptionalDoesNotFail(t *testing.T) {
 
 	env := envWith(t, []*agent.Agent{a}, true, map[string]map[string][]string{
 		agent.NameCodex: {
-			"SessionStart": {"hitl-metrics hook session-start --agent codex"},
-			"Stop":         {"hitl-metrics hook stop --agent codex"},
+			"SessionStart": {"agent-telemetry hook session-start --agent codex"},
+			"Stop":         {"agent-telemetry hook stop --agent codex"},
 			// PostToolUse intentionally missing (optional)
 		},
 	})
@@ -134,11 +134,12 @@ func TestIsRegistered_MatchesLooseCommand(t *testing.T) {
 		sub  string
 		want bool
 	}{
-		{"exact", "hitl-metrics hook session-start", "session-start", true},
-		{"with --agent", "hitl-metrics hook session-start --agent codex", "session-start", true},
-		{"absolute path", "/usr/local/bin/hitl-metrics hook stop", "stop", true},
-		{"different sub", "hitl-metrics hook session-end", "session-start", false},
+		{"exact", "agent-telemetry hook session-start", "session-start", true},
+		{"with --agent", "agent-telemetry hook session-start --agent codex", "session-start", true},
+		{"absolute path", "/usr/local/bin/agent-telemetry hook stop", "stop", true},
+		{"different sub", "agent-telemetry hook session-end", "session-start", false},
 		{"unrelated", "/other/script.sh stop", "stop", false},
+		{"legacy hitl-metrics", "hitl-metrics hook session-start", "session-start", true},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

@@ -8,12 +8,15 @@ import (
 	"strings"
 )
 
-// Uninstall removes hitl-metrics hook entries from ~/.claude/settings.json.
+// Uninstall removes agent-telemetry hook entries from ~/.claude/settings.json.
 //
-// Targets: single-hook entries created by the legacy `hitl-metrics install`
-// (matcher empty, exactly one command referencing a hitl-metrics
-// subcommand). Composed entries (matcher set, or multiple hooks bundled)
-// are left alone — those were almost certainly written by a human.
+// Targets: single-hook entries created by the legacy `install` subcommand
+// (matcher empty, exactly one command referencing an agent-telemetry or
+// hitl-metrics subcommand). Composed entries (matcher set, or multiple
+// hooks bundled) are left alone — those were almost certainly written by
+// a human. The legacy "hitl-metrics" name is still matched so that
+// `agent-telemetry uninstall-hooks` can clean up entries written before
+// the rename.
 //
 // Codex side (`~/.codex/config.toml`) is intentionally not touched: the
 // TOML is human-edited and we cannot safely round-trip arbitrary TOML in
@@ -78,7 +81,7 @@ func Uninstall() error {
 	}
 
 	if removed == 0 {
-		fmt.Println("uninstall: hitl-metrics の hook エントリは見つかりませんでした")
+		fmt.Println("uninstall: agent-telemetry の hook エントリは見つかりませんでした")
 		return nil
 	}
 
@@ -121,8 +124,11 @@ type hookCommand struct {
 }
 
 // isHitlOnlyEntry reports whether the entry is a single-hook entry created
-// by the legacy `hitl-metrics install` (matcher empty, exactly one command
-// that references the given hitl-metrics subcommand).
+// by the legacy `install` subcommand (matcher empty, exactly one command
+// that references the given agent-telemetry subcommand).
+//
+// Matches both the new "agent-telemetry" and the legacy "hitl-metrics"
+// binary names so unmigrated environments can still be cleaned up.
 func isHitlOnlyEntry(e hookEntry, subcommand string) bool {
 	if e.Matcher != "" {
 		return false
@@ -131,5 +137,8 @@ func isHitlOnlyEntry(e hookEntry, subcommand string) bool {
 		return false
 	}
 	cmd := e.Hooks[0].Command
-	return strings.Contains(cmd, "hitl-metrics") && strings.Contains(cmd, "hook "+subcommand)
+	if !strings.Contains(cmd, "hook "+subcommand) {
+		return false
+	}
+	return strings.Contains(cmd, "agent-telemetry") || strings.Contains(cmd, "hitl-metrics")
 }

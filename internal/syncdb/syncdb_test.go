@@ -8,7 +8,7 @@ import (
 
 	_ "modernc.org/sqlite"
 
-	"github.com/ishii1648/hitl-metrics/internal/agent"
+	"github.com/ishii1648/agent-telemetry/internal/agent"
 )
 
 func TestRunWithPaths(t *testing.T) {
@@ -38,7 +38,7 @@ func TestRunWithPaths(t *testing.T) {
 			`{"timestamp":"2026-03-01 12:00:00","session_id":"s3","cwd":"/tmp","repo":"ishii1648/dotfiles","branch":"main","pr_urls":["https://github.com/ishii1648/dotfiles/pull/5"],"transcript":"`+t3Path+`","parent_session_id":"","backfill_checked":false,"is_merged":true}`+"\n",
 	), 0644)
 
-	dbPath := filepath.Join(dir, "hitl-metrics.db")
+	dbPath := filepath.Join(dir, "agent-telemetry.db")
 	err := RunWithPaths(indexPath, dbPath)
 	if err != nil {
 		t.Fatal(err)
@@ -189,7 +189,7 @@ func TestRunWithPaths_MergedFilter(t *testing.T) {
 			`{"timestamp":"2026-03-01 11:00:00","session_id":"s2","cwd":"/tmp","repo":"user/repo","branch":"feat/b","pr_urls":["https://github.com/user/repo/pull/2"],"transcript":"`+tPath+`","parent_session_id":"","is_merged":false}`+"\n",
 	), 0644)
 
-	dbPath := filepath.Join(dir, "hitl-metrics.db")
+	dbPath := filepath.Join(dir, "agent-telemetry.db")
 	if err := RunWithPaths(indexPath, dbPath); err != nil {
 		t.Fatal(err)
 	}
@@ -229,7 +229,7 @@ func TestRunWithPaths_JoinInflationFix(t *testing.T) {
 		`{"timestamp":"2026-03-01 10:00:00","session_id":"s1","cwd":"/tmp","repo":"user/repo","branch":"feat/x","pr_urls":["https://github.com/user/repo/pull/1"],"transcript":"`+tPath+`","parent_session_id":"","is_merged":true}`+"\n",
 	), 0644)
 
-	dbPath := filepath.Join(dir, "hitl-metrics.db")
+	dbPath := filepath.Join(dir, "agent-telemetry.db")
 	if err := RunWithPaths(indexPath, dbPath); err != nil {
 		t.Fatal(err)
 	}
@@ -255,7 +255,7 @@ func TestRunWithPaths_DummyPRURL(t *testing.T) {
 		`{"timestamp":"2026-03-01 10:00:00","session_id":"s1","cwd":"/tmp","repo":"user/repo","branch":"feat","pr_urls":["https://github.com/org/repo/pull/123"],"transcript":"","parent_session_id":"","backfill_checked":false}`+"\n",
 	), 0644)
 
-	dbPath := filepath.Join(dir, "hitl-metrics.db")
+	dbPath := filepath.Join(dir, "agent-telemetry.db")
 	err := RunWithPaths(indexPath, dbPath)
 	if err != nil {
 		t.Fatal(err)
@@ -305,7 +305,7 @@ func TestRunForAgents_MixedClaudeAndCodex(t *testing.T) {
 		`{"coding_agent":"codex","agent_version":"0.128.0","timestamp":"2026-03-02 10:00:00","ended_at":"2026-03-02 10:05:00","session_id":"x1","cwd":"/tmp","repo":"u/r","branch":"feat/y","pr_urls":["https://github.com/u/r/pull/2"],"transcript":"`+codexT+`","parent_session_id":"","is_merged":true,"end_reason":"stop"}`+"\n",
 	), 0644)
 
-	dbPath := filepath.Join(dir, "hitl-metrics.db")
+	dbPath := filepath.Join(dir, "agent-telemetry.db")
 	if err := runWithSources([]agentSource{
 		{Agent: mustAgent("claude", filepath.Dir(claudeIdx)), IndexPath: claudeIdx},
 		{Agent: mustAgent("codex", filepath.Dir(codexIdx)), IndexPath: codexIdx},
@@ -366,7 +366,7 @@ func TestRunForAgents_SessionIDCollisionAcrossAgents(t *testing.T) {
 	os.WriteFile(codexIdx, []byte(
 		`{"coding_agent":"codex","timestamp":"2026-03-02 10:00:00","session_id":"shared","cwd":"/tmp","repo":"u/r","branch":"main","pr_urls":[],"transcript":"","parent_session_id":""}`+"\n",
 	), 0644)
-	dbPath := filepath.Join(dir, "hitl-metrics.db")
+	dbPath := filepath.Join(dir, "agent-telemetry.db")
 	err := runWithSources([]agentSource{
 		{Agent: mustAgent("claude", dir), IndexPath: claudeIdx},
 		{Agent: mustAgent("codex", dir), IndexPath: codexIdx},
@@ -398,7 +398,7 @@ func TestRunWithPaths_IdempotentRerun(t *testing.T) {
 		`{"timestamp":"2026-03-01 10:00:00","ended_at":"2026-03-01 10:30:00","session_id":"s1","cwd":"/tmp","repo":"u/r","branch":"feat/x","pr_urls":["https://github.com/u/r/pull/1"],"transcript":"`+tPath+`","parent_session_id":"","is_merged":true,"review_comments":1}`+"\n",
 	), 0644)
 
-	dbPath := filepath.Join(dir, "hitl-metrics.db")
+	dbPath := filepath.Join(dir, "agent-telemetry.db")
 
 	if err := RunWithPaths(indexPath, dbPath); err != nil {
 		t.Fatalf("first run: %v", err)
@@ -444,7 +444,7 @@ func TestRunWithPaths_IdempotentRerun(t *testing.T) {
 
 func TestRunWithPaths_StaleSchemaFallback(t *testing.T) {
 	dir := t.TempDir()
-	dbPath := filepath.Join(dir, "hitl-metrics.db")
+	dbPath := filepath.Join(dir, "agent-telemetry.db")
 
 	// Pre-create a DB whose recorded hash does not match the embedded schema.
 	// The legacy permission_events table from earlier versions is also created

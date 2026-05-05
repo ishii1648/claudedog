@@ -9,21 +9,21 @@ import (
 
 	_ "modernc.org/sqlite"
 
-	"github.com/ishii1648/hitl-metrics/internal/agent"
-	"github.com/ishii1648/hitl-metrics/internal/sessionindex"
-	"github.com/ishii1648/hitl-metrics/internal/transcript"
+	"github.com/ishii1648/agent-telemetry/internal/agent"
+	"github.com/ishii1648/agent-telemetry/internal/sessionindex"
+	"github.com/ishii1648/agent-telemetry/internal/transcript"
 )
 
 const dummyPRURL = "https://github.com/org/repo/pull/123"
 
-// DBPath returns the default path to hitl-metrics.db.
+// DBPath returns the default path to agent-telemetry.db.
 //
 // The DB lives under ~/.claude/ even for Codex sessions for backward
 // compatibility (existing Grafana datasources point here). The DB itself
 // is multi-agent — distinguish via the coding_agent column.
 func DBPath() string {
 	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".claude", "hitl-metrics.db")
+	return filepath.Join(home, ".claude", "agent-telemetry.db")
 }
 
 // Run rebuilds the SQLite database from every detected agent's

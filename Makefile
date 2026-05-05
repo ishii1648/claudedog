@@ -2,17 +2,17 @@
 
 PREFIX ?= $(HOME)/.local
 BIN_DIR := $(PREFIX)/bin
-BIN_NAME := hitl-metrics
+BIN_NAME := agent-telemetry
 
 # 実データ表示用 DB パス（grafana-up が参照）。上書き可。
-HITL_METRICS_DB ?= $(HOME)/.claude/hitl-metrics.db
+HITL_METRICS_DB ?= $(HOME)/.claude/agent-telemetry.db
 
 build:
-	CGO_ENABLED=0 go build -o bin/$(BIN_NAME) ./cmd/hitl-metrics/
+	CGO_ENABLED=0 go build -o bin/$(BIN_NAME) ./cmd/agent-telemetry/
 
 install:
 	@mkdir -p "$(BIN_DIR)"
-	CGO_ENABLED=0 go build -o "$(BIN_DIR)/$(BIN_NAME)" ./cmd/hitl-metrics/
+	CGO_ENABLED=0 go build -o "$(BIN_DIR)/$(BIN_NAME)" ./cmd/agent-telemetry/
 	@echo "Installed: $(BIN_DIR)/$(BIN_NAME)"
 	@case ":$$PATH:" in *":$(BIN_DIR):"*) ;; *) echo "Warning: $(BIN_DIR) is not in PATH";; esac
 
@@ -26,7 +26,7 @@ grafana-fixtures:
 grafana-up:
 	@if [ ! -f "$(HITL_METRICS_DB)" ]; then \
 		echo "DB not found: $(HITL_METRICS_DB)"; \
-		echo "Run 'hitl-metrics sync-db' first, or override: make grafana-up HITL_METRICS_DB=/path/to/db"; \
+		echo "Run 'agent-telemetry sync-db' first, or override: make grafana-up HITL_METRICS_DB=/path/to/db"; \
 		exit 1; \
 	fi
 	HITL_METRICS_DB=$(HITL_METRICS_DB) docker compose up -d
@@ -42,7 +42,7 @@ grafana-up:
 	echo "Grafana failed to start within 60s"; exit 1
 
 grafana-up-e2e: grafana-fixtures
-	HITL_METRICS_DB=$(CURDIR)/e2e/testdata/hitl-metrics.db docker compose up -d
+	HITL_METRICS_DB=$(CURDIR)/e2e/testdata/agent-telemetry.db docker compose up -d
 	@echo "Waiting for Grafana to be ready..."
 	@for i in $$(seq 1 60); do \
 		if curl -sf http://localhost:$${GRAFANA_PORT:-13000}/api/health > /dev/null 2>&1; then \

@@ -5,7 +5,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/ishii1648/hitl-metrics/internal/agent"
+	"github.com/ishii1648/agent-telemetry/internal/agent"
 )
 
 // HookInput is the unified hook payload accepted from both Claude Code and
