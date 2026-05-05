@@ -1,4 +1,4 @@
-// Package upgrade replaces the current hitl-metrics binary with the latest
+// Package upgrade replaces the current agent-telemetry binary with the latest
 // release artifact published on GitHub. It downloads the platform-matched
 // tarball, verifies the SHA-256 against checksums.txt, extracts the binary,
 // and atomically renames it over the running executable's path.
@@ -18,6 +18,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -25,9 +26,9 @@ import (
 )
 
 const (
-	releaseAPI    = "https://api.github.com/repos/ishii1648/hitl-metrics/releases/latest"
+	releaseAPI    = "https://api.github.com/repos/ishii1648/agent-telemetry/releases/latest"
 	checksumsName = "checksums.txt"
-	binaryName    = "hitl-metrics"
+	binaryName    = "agent-telemetry"
 )
 
 // Options controls a single upgrade run.
@@ -120,7 +121,20 @@ func Run(opts Options) error {
 	}
 
 	fmt.Fprintf(opts.Out, "upgraded %s → %s (%s)\n", displayVersion(opts.CurrentVersion), rel.TagName, binPath)
+	warnLegacyBinary(opts.Out, exec.LookPath)
 	return nil
+}
+
+// warnLegacyBinary surfaces a hitl-metrics binary still on PATH so the
+// user knows to remove it. Auto-deleting risks clobbering files in
+// /usr/local/bin owned by root or installs outside the user's
+// expectation, so we only warn.
+func warnLegacyBinary(w io.Writer, lookPath func(string) (string, error)) {
+	path, err := lookPath("hitl-metrics")
+	if err != nil {
+		return
+	}
+	fmt.Fprintf(w, "warning: legacy hitl-metrics binary found at %s — remove it (rm %s) so PATH only resolves to agent-telemetry\n", path, path)
 }
 
 func pickURLs(assets []releaseAsset, assetName string) (string, string) {
@@ -137,7 +151,7 @@ func pickURLs(assets []releaseAsset, assetName string) (string, string) {
 }
 
 // exePath resolves symlinks so the rename targets the real file. Without
-// this, a `/usr/local/bin/hitl-metrics` symlink to `/opt/hitl-metrics/bin`
+// this, a `/usr/local/bin/agent-telemetry` symlink to `/opt/agent-telemetry/bin`
 // would get clobbered by a regular file.
 func exePath() (string, error) {
 	p, err := os.Executable()
@@ -210,7 +224,7 @@ func downloadAndVerify(client *http.Client, url, expectedSum, destDir string) (s
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("download: %s", resp.Status)
 	}
-	f, err := os.CreateTemp(destDir, "hitl-metrics-dl-*.tar.gz")
+	f, err := os.CreateTemp(destDir, "agent-telemetry-dl-*.tar.gz")
 	if err != nil {
 		return "", err
 	}
@@ -258,7 +272,7 @@ func extractBinary(tarball, destDir string) (string, error) {
 		if filepath.Base(hdr.Name) != binaryName {
 			continue
 		}
-		out, err := os.CreateTemp(destDir, "hitl-metrics-new-*")
+		out, err := os.CreateTemp(destDir, "agent-telemetry-new-*")
 		if err != nil {
 			return "", err
 		}

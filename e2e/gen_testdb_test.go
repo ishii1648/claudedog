@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ishii1648/hitl-metrics/internal/syncdb"
+	"github.com/ishii1648/agent-telemetry/internal/syncdb"
 )
 
-// TestGenTestDB generates e2e/testdata/hitl-metrics.db from test fixtures.
+// TestGenTestDB generates e2e/testdata/agent-telemetry.db from test fixtures.
 // Run: CGO_ENABLED=0 GOTOOLCHAIN=local go test -run TestGenTestDB -v ./e2e/
 func TestGenTestDB(t *testing.T) {
 	projectRoot, err := filepath.Abs(filepath.Join("..", "."))
@@ -21,7 +21,7 @@ func TestGenTestDB(t *testing.T) {
 	}
 
 	indexPath := filepath.Join(projectRoot, "e2e", "testdata", "session-index.jsonl")
-	dbPath := filepath.Join(projectRoot, "e2e", "testdata", "hitl-metrics.db")
+	dbPath := filepath.Join(projectRoot, "e2e", "testdata", "agent-telemetry.db")
 
 	tmpIndex := filepath.Join(t.TempDir(), "session-index.jsonl")
 	if err := rewriteFixture(indexPath, tmpIndex, projectRoot, time.Now().UTC()); err != nil {

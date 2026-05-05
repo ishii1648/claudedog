@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/ishii1648/hitl-metrics/internal/setup"
+	"github.com/ishii1648/agent-telemetry/internal/setup"
 )
 
 // withSettingsPath swaps the underlying setup package's path lookup.
@@ -38,7 +38,7 @@ func TestUninstallAliasRemovesHook(t *testing.T) {
 	body := `{
 		"hooks": {
 			"Stop": [
-				{"matcher": "", "hooks": [{"type": "command", "command": "hitl-metrics hook stop"}]}
+				{"matcher": "", "hooks": [{"type": "command", "command": "agent-telemetry hook stop"}]}
 			]
 		}
 	}`

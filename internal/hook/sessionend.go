@@ -5,8 +5,8 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/ishii1648/hitl-metrics/internal/agent"
-	"github.com/ishii1648/hitl-metrics/internal/sessionindex"
+	"github.com/ishii1648/agent-telemetry/internal/agent"
+	"github.com/ishii1648/agent-telemetry/internal/sessionindex"
 )
 
 // RunSessionEnd handles the SessionEnd hook (Claude only — Codex has no
@@ -27,7 +27,7 @@ func RunSessionEnd(input *HookInput, a *agent.Agent) error {
 	if !updated {
 		return nil
 	}
-	if out, err := exec.Command("hitl-metrics", "sync-db").CombinedOutput(); err != nil {
+	if out, err := exec.Command("agent-telemetry", "sync-db").CombinedOutput(); err != nil {
 		return fmt.Errorf("sync-db: %w\n%s", err, out)
 	}
 	return nil

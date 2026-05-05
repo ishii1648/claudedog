@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ishii1648/hitl-metrics/internal/agent"
+	"github.com/ishii1648/agent-telemetry/internal/agent"
 )
 
 func readSettings(t *testing.T, path string) map[string]json.RawMessage {
@@ -96,15 +96,15 @@ func TestUninstall_RemovesHitlHooks(t *testing.T) {
 		"model": "sonnet",
 		"hooks": {
 			"SessionStart": [
-				{"matcher": "", "hooks": [{"type": "command", "command": "hitl-metrics hook session-start"}]},
-				{"matcher": "", "hooks": [{"type": "command", "command": "hitl-metrics hook todo-cleanup"}]},
+				{"matcher": "", "hooks": [{"type": "command", "command": "agent-telemetry hook session-start"}]},
+				{"matcher": "", "hooks": [{"type": "command", "command": "agent-telemetry hook todo-cleanup"}]},
 				{"matcher": "", "hooks": [{"type": "command", "command": "/other/script.sh"}]}
 			],
 			"SessionEnd": [
-				{"matcher": "", "hooks": [{"type": "command", "command": "hitl-metrics hook session-end", "timeout": 10}]}
+				{"matcher": "", "hooks": [{"type": "command", "command": "agent-telemetry hook session-end", "timeout": 10}]}
 			],
 			"Stop": [
-				{"matcher": "", "hooks": [{"type": "command", "command": "hitl-metrics hook stop"}]}
+				{"matcher": "", "hooks": [{"type": "command", "command": "agent-telemetry hook stop"}]}
 			]
 		}
 	}`

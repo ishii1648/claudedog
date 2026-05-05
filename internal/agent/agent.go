@@ -33,20 +33,20 @@ const (
 
 // EnvVar is the environment variable that overrides --agent when the flag
 // is omitted but autodetection is not desired.
-const EnvVar = "HITL_METRICS_AGENT"
+const EnvVar = "AGENT_TELEMETRY_AGENT"
 
 // SessionIndexPath returns <DataDir>/session-index.jsonl.
 func (a *Agent) SessionIndexPath() string {
 	return filepath.Join(a.DataDir, "session-index.jsonl")
 }
 
-// StatePath returns <DataDir>/hitl-metrics-state.json.
+// StatePath returns <DataDir>/agent-telemetry-state.json.
 func (a *Agent) StatePath() string {
-	return filepath.Join(a.DataDir, "hitl-metrics-state.json")
+	return filepath.Join(a.DataDir, "agent-telemetry-state.json")
 }
 
 // LogDir returns <DataDir>/logs. Both agents write debug logs there for
-// uniformity (the Codex log location is a hitl-metrics convention,
+// uniformity (the Codex log location is an agent-telemetry convention,
 // not a Codex CLI requirement).
 func (a *Agent) LogDir() string {
 	return filepath.Join(a.DataDir, "logs")

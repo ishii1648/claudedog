@@ -13,13 +13,13 @@ type State struct {
 	LastMetaCheck      time.Time `json:"last_meta_check"`
 }
 
-// StatePath returns ~/.claude/hitl-metrics-state.json (Claude default).
+// StatePath returns ~/.claude/agent-telemetry-state.json (Claude default).
 //
 // Deprecated: use agent.StatePath() so Codex cursors land under ~/.codex/.
 // Kept for callers that have not been threaded through with an agent yet.
 func StatePath() string {
 	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".claude", "hitl-metrics-state.json")
+	return filepath.Join(home, ".claude", "agent-telemetry-state.json")
 }
 
 // LoadState reads the state file. Returns zero state if the file doesn't exist.
@@ -47,7 +47,7 @@ func SaveState(path string, s State) error {
 	data = append(data, '\n')
 
 	dir := filepath.Dir(path)
-	tmp, err := os.CreateTemp(dir, "hitl-metrics-state-*.tmp")
+	tmp, err := os.CreateTemp(dir, "agent-telemetry-state-*.tmp")
 	if err != nil {
 		return err
 	}

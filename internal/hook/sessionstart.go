@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ishii1648/hitl-metrics/internal/agent"
+	"github.com/ishii1648/agent-telemetry/internal/agent"
 )
 
 // RunSessionStart handles the SessionStart hook event for the given agent.

@@ -3,11 +3,11 @@ package upgrade
 import "testing"
 
 func TestParseChecksum(t *testing.T) {
-	body := `0123abc  hitl-metrics_darwin_arm64.tar.gz
-deadbeef  hitl-metrics_linux_amd64.tar.gz
-cafef00d  hitl-metrics_darwin_amd64.tar.gz
+	body := `0123abc  agent-telemetry_darwin_arm64.tar.gz
+deadbeef  agent-telemetry_linux_amd64.tar.gz
+cafef00d  agent-telemetry_darwin_amd64.tar.gz
 `
-	got, err := parseChecksum(body, "hitl-metrics_darwin_arm64.tar.gz")
+	got, err := parseChecksum(body, "agent-telemetry_darwin_arm64.tar.gz")
 	if err != nil {
 		t.Fatalf("parseChecksum: %v", err)
 	}
@@ -23,10 +23,10 @@ cafef00d  hitl-metrics_darwin_amd64.tar.gz
 func TestPickURLs(t *testing.T) {
 	assets := []releaseAsset{
 		{Name: "checksums.txt", BrowserDownloadURL: "https://example/checksums.txt"},
-		{Name: "hitl-metrics_darwin_arm64.tar.gz", BrowserDownloadURL: "https://example/asset.tar.gz"},
-		{Name: "hitl-metrics_linux_amd64.tar.gz", BrowserDownloadURL: "https://example/other.tar.gz"},
+		{Name: "agent-telemetry_darwin_arm64.tar.gz", BrowserDownloadURL: "https://example/asset.tar.gz"},
+		{Name: "agent-telemetry_linux_amd64.tar.gz", BrowserDownloadURL: "https://example/other.tar.gz"},
 	}
-	a, c := pickURLs(assets, "hitl-metrics_darwin_arm64.tar.gz")
+	a, c := pickURLs(assets, "agent-telemetry_darwin_arm64.tar.gz")
 	if a != "https://example/asset.tar.gz" {
 		t.Errorf("asset url = %q", a)
 	}
@@ -34,7 +34,7 @@ func TestPickURLs(t *testing.T) {
 		t.Errorf("checksums url = %q", c)
 	}
 
-	a, _ = pickURLs(assets, "hitl-metrics_windows_arm64.tar.gz")
+	a, _ = pickURLs(assets, "agent-telemetry_windows_arm64.tar.gz")
 	if a != "" {
 		t.Errorf("expected empty asset url for missing platform, got %q", a)
 	}
