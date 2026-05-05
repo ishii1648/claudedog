@@ -201,7 +201,7 @@ func UpdateEnd(indexPath string, sessionID string, endedAt string, reason string
 
 // UpdatePRMeta updates PR metadata for all sessions that have the given pr_url.
 // Returns true if the file was modified.
-func UpdatePRMeta(indexPath string, prURL string, isMerged bool, reviewComments, changesRequested int) (bool, error) {
+func UpdatePRMeta(indexPath string, prURL string, isMerged bool, reviewComments, changesRequested int, prTitle string) (bool, error) {
 	if prURL == "" {
 		return false, nil
 	}
@@ -227,7 +227,7 @@ func UpdatePRMeta(indexPath string, prURL string, isMerged bool, reviewComments,
 		if !match {
 			continue
 		}
-		if s.IsMerged == isMerged && s.ReviewComments == reviewComments && s.ChangesRequested == changesRequested {
+		if s.IsMerged == isMerged && s.ReviewComments == reviewComments && s.ChangesRequested == changesRequested && s.PRTitle == prTitle {
 			continue
 		}
 
@@ -243,6 +243,14 @@ func UpdatePRMeta(indexPath string, prURL string, isMerged bool, reviewComments,
 		raw, err = remarshalWithUpdate(raw, "changes_requested", changesRequested)
 		if err != nil {
 			return false, err
+		}
+		// gh が title を返さなかったケース（取得失敗）で既存 pr_title を空で上書きしないよう、
+		// 空文字列の prTitle は書かない。明示的にクリアしたい場合はそもそも呼び出さない。
+		if prTitle != "" {
+			raw, err = remarshalWithUpdate(raw, "pr_title", prTitle)
+			if err != nil {
+				return false, err
+			}
 		}
 		raws[i] = raw
 		updated = true
@@ -284,14 +292,15 @@ func remarshalWithUpdate(raw json.RawMessage, key string, value any) (json.RawMe
 		"repo":              3,
 		"branch":            4,
 		"pr_urls":           5,
-		"transcript":        6,
-		"parent_session_id": 7,
-		"ended_at":          8,
-		"end_reason":        9,
-		"backfill_checked":  10,
-		"is_merged":         11,
-		"review_comments":   12,
-		"changes_requested": 13,
+		"pr_title":          6,
+		"transcript":        7,
+		"parent_session_id": 8,
+		"ended_at":          9,
+		"end_reason":        10,
+		"backfill_checked":  11,
+		"is_merged":         12,
+		"review_comments":   13,
+		"changes_requested": 14,
 	}
 	sort.Slice(keys, func(i, j int) bool {
 		oi, oki := order[keys[i]]

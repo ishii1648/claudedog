@@ -2,4 +2,4 @@
 
 package syncdb
 
-const schemaHash = "ac9b8135a13792680328305077bcf270b13b1df9232064070d082e327b82c76f"
+const schemaHash = "0b3350ce0361dd8b4ec4d3d3135f0338b8e58b534951b8d4bc221f47e684d3f2"

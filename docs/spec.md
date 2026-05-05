@@ -114,6 +114,7 @@ agent ごとに収集元を分離し、SQLite DB は単一に集約する。
   "repo": "org/repo",
   "branch": "feature-xxx",
   "pr_urls": ["https://github.com/org/repo/pull/123"],
+  "pr_title": "feat: add metrics dashboard",
   "transcript": "/path/to/transcript.jsonl",
   "parent_session_id": "",
   "ended_at": "2026-02-27 13:00:00",
@@ -128,6 +129,7 @@ agent ごとに収集元を分離し、SQLite DB は単一に集約する。
 - `coding_agent` は `claude` または `codex`。欠落時は `claude` として扱う（後方互換）。
 - `agent_version` は agent 自身が報告するバージョン文字列（取得不能なら空文字列）。バージョン跨ぎでの効率比較に使う。
 - `pr_urls` は PostToolUse / Stop / `update` / `backfill` から重複排除しつつ追記される。`sync-db` は配列の最後の 1 件を採用する。
+- `pr_title` は backfill が `gh pr view --json title` で取得する PR タイトル。欠落時 / 取得失敗時は空文字列として扱う（後方互換）。
 - `backfill_checked: true` のレコードは backfill で再 API 呼び出しされない。PR が存在しないブランチで永続スキップされる。
 - Codex の場合: `end_reason` は Stop hook の最終発火を記録するため `stop` 固定。`transcript` は `~/.codex/sessions/.../rollout-*.jsonl[.zst]` のフルパス。
 - 後方互換: 古いレコードに新フィールドが欠けていても扱える（欠落値は 0 / false / 空文字列）。
@@ -150,6 +152,7 @@ agent ごとに収集元を分離し、SQLite DB は単一に集約する。
 | `repo` | TEXT | リポジトリ（`org/repo` 形式） |
 | `branch` | TEXT | ブランチ名 |
 | `pr_url` | TEXT | PR URL（`pr_urls` 配列の最後の 1 件） |
+| `pr_title` | TEXT | PR タイトル。backfill が `gh pr view --json title` で取得（取得不能なら空） |
 | `transcript` | TEXT | transcript ファイルパス |
 | `parent_session_id` | TEXT | 親セッション ID。サブエージェント判定用 |
 | `ended_at` | TEXT | セッション終了時刻 |
@@ -201,7 +204,9 @@ PR 単位の集約ビュー。次のフィルタ条件を適用する。
 | `is_ghost = 0` | ゴーストセッションを除外 |
 | `repo NOT IN ('ishii1648/dotfiles')` | dotfiles リポジトリを除外 |
 
-集約カラム: `pr_url`, `coding_agent`, `model`, `session_count`, `tool_use_total`, `mid_session_msgs`, `ask_user_question`, `input_tokens`, `output_tokens`, `cache_write_tokens`, `cache_read_tokens`, `reasoning_tokens`, `review_comments`, `changes_requested`, `total_tokens`, `fresh_tokens`, `tokens_per_session`, `tokens_per_tool_use`, `pr_per_million_tokens`
+集約カラム: `pr_url`, `pr_title`, `coding_agent`, `model`, `session_count`, `tool_use_total`, `mid_session_msgs`, `ask_user_question`, `input_tokens`, `output_tokens`, `cache_write_tokens`, `cache_read_tokens`, `reasoning_tokens`, `review_comments`, `changes_requested`, `total_tokens`, `fresh_tokens`, `tokens_per_session`, `tokens_per_tool_use`, `pr_per_million_tokens`
+
+`pr_title` は同一 PR に紐づく全セッションで等しい想定だが、安全のため `MAX(s.pr_title)` で集約する（未取得セッションが空文字列を返しても、取得済みセッションのタイトルが採用される）。
 
 `task_type` は集約軸から外れている（ADR-024 で「定量指標は task_type を集計軸に使わない」方針が採用されたため）。`sessions.task_type` カラム自体は後方互換と任意フィルタの余地として残す。
 

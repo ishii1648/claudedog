@@ -296,7 +296,7 @@
       "datasource": { "type": "frser-sqlite-datasource", "uid": "agent-telemetry" },
       "targets": [
         {
-          "rawQueryText": "SELECT replace(replace(pr_url, 'https://github.com/', ''), '/pull/', '#') AS pr, coding_agent, model, total_tokens, fresh_tokens, tokens_per_tool_use, session_count, mid_session_msgs, ask_user_question, pr_url FROM pr_metrics WHERE total_tokens > 0 AND coding_agent IN (${coding_agent:singlequote}) ORDER BY fresh_tokens DESC",
+          "rawQueryText": "SELECT replace(replace(pr_url, 'https://github.com/', ''), '/pull/', '#') AS pr, substr(pr_title, 1, 50) || CASE WHEN length(pr_title) > 50 THEN '…' ELSE '' END AS pr_title, coding_agent, model, total_tokens, fresh_tokens, tokens_per_tool_use, session_count, mid_session_msgs, pr_url FROM pr_metrics WHERE total_tokens > 0 AND coding_agent IN (${coding_agent:singlequote}) ORDER BY fresh_tokens DESC",
           "refId": "A"
         }
       ],
@@ -307,7 +307,14 @@
             "matcher": { "id": "byName", "options": "pr" },
             "properties": [
               { "id": "links", "value": [{ "title": "Open PR", "url": "${__data.fields.pr_url}" }] },
-              { "id": "custom.width", "value": 240 }
+              { "id": "custom.width", "value": 180 }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "pr_title" },
+            "properties": [
+              { "id": "custom.width", "value": 280 },
+              { "id": "custom.cellOptions", "value": { "type": "auto", "wrapText": true } }
             ]
           },
           {

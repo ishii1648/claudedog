@@ -24,6 +24,7 @@ CREATE TABLE sessions (
     repo              TEXT NOT NULL DEFAULT '',
     branch            TEXT NOT NULL DEFAULT '',
     pr_url            TEXT NOT NULL DEFAULT '',
+    pr_title          TEXT NOT NULL DEFAULT '',
     transcript        TEXT NOT NULL DEFAULT '',
     parent_session_id TEXT NOT NULL DEFAULT '',
     ended_at          TEXT NOT NULL DEFAULT '',
@@ -123,6 +124,7 @@ SELECT
 FROM (
     SELECT
         s.pr_url,
+        MAX(s.pr_title) AS pr_title,
         s.coding_agent,
         MAX(s.task_type) AS task_type,
         MAX(ts.model) AS model,

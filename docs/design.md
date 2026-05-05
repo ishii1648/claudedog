@@ -175,6 +175,14 @@ hook はすべて `agent-telemetry hook <event> [--agent <claude|codex>]` の Go
 
 cursor が古くても結果に影響はない。`backfill_checked` フラグが API 呼び出しの永続スキップを担うため、cursor は単なる効率化のヒントとして扱う。Stop hook 起動時にまだ PR が作られていなかったセッション（リトライ待ち）は cursor の進行とは独立して毎回再評価する — そうしないと PR が後から作られたときに永久に取りこぼす。
 
+### PR タイトルの取得
+
+backfill は `gh pr list` / `gh pr view` の `--json` 引数に `title` を含めて、`is_merged` / `review_comments` / `changes_requested` と同じ呼び出しで PR タイトルを取得する。追加の API 呼び出しは発生しない（同じレスポンスから別フィールドを抽出するだけ）。
+
+取得した `title` は `sessionindex.UpdatePRMeta` を介して同一 `pr_url` を持つ全セッションの `pr_title` フィールドに転写する。`sync-db` は `sessions.pr_title` カラムへ単純コピーし、`pr_metrics` VIEW では `MAX(s.pr_title)` で集約する。
+
+空文字列での上書きはしない。`gh` が title を返さなかった（タイトルが空 / API エラーで取得失敗）場合に既存の `pr_title` を消さないため、`UpdatePRMeta` は `prTitle == ""` のとき `pr_title` フィールドを書き換えずスキップする。
+
 ### `(repo, branch)` グルーピングと `backfill_checked`
 
 backfill は `pr_urls` が空のセッションを `(repo, branch)` でグループ化し、`gh pr list` を 1 回だけ実行する。同一ブランチで複数セッションがあっても API 呼び出しは 1 回。
